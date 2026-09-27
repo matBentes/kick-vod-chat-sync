@@ -37,14 +37,12 @@ Funciona no Chrome e em navegadores baseados nele (Edge, Brave, Opera). No Firef
 
 ## Controles
 
-A barra fica no topo do chat:
+Não tem nada para configurar: o chat fica sincronizado o tempo todo. A barra no topo mostra o estado:
 
 | Controle | O que faz |
 | --- | --- |
-| **1.5x** | Velocidade atual do vídeo (só aparece fora de 1x) |
-| **−1s / +1s** | Ajuste fino, caso o chat pareça adiantado ou atrasado. Fica salvo |
-| **↺** | Zera o ajuste |
-| **⇄** | Alterna para o chat original da Kick e volta |
+| **Sincronizado 1.5x** | Chat da extensão ativo; a velocidade só aparece fora de 1x |
+| **Chat original** | Mostra o replay original da Kick. A barra continua no topo com **Voltar ao sincronizado** |
 | **Novas mensagens ↓** | Aparece se você rolar para cima; o chat não te puxa para baixo enquanto você lê |
 
 ## Limitações

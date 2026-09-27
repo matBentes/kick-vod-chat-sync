@@ -25,7 +25,15 @@
 /* no lugar da lista nativa: ocupa o contêiner sem esticá-lo
    (o nativo usa contain: strict; aqui o equivalente é absolute + inset) */
 #kvcs-panel:not(.kvcs-floating) { position: absolute; inset: 0; }
-#kvcs-panel.kvcs-hidden { display: none; }
+/* modo "chat original": o painel vira só a barra, por cima do topo da lista nativa,
+   para o botão de voltar continuar acessível */
+#kvcs-panel.kvcs-native-mode { bottom: auto; border-bottom: 1px solid var(--kvcs-hover); }
+#kvcs-panel.kvcs-native-mode .kvcs-list,
+#kvcs-panel.kvcs-native-mode .kvcs-more,
+#kvcs-panel.kvcs-native-mode .kvcs-status,
+#kvcs-panel.kvcs-native-mode .kvcs-rate { display: none; }
+#kvcs-panel.kvcs-native-mode .kvcs-dot { background: var(--kvcs-muted); }
+#kvcs-panel.kvcs-floating .kvcs-switch { display: none; }
 .kvcs-native-hidden { display: none !important; }
 
 /* fallback quando a área do chat nativo não existe */
@@ -54,7 +62,6 @@
 .kvcs-title { font-weight: 600; margin-left: 2px; }
 .kvcs-rate { color: var(--kvcs-green); font-weight: 700; }
 .kvcs-spacer { flex: 1; }
-.kvcs-offval { min-width: 30px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
 #kvcs-panel button {
   all: unset;
   box-sizing: border-box;
@@ -64,17 +71,17 @@
 }
 #kvcs-panel .kvcs-bar button {
   height: 22px;
-  min-width: 22px;
-  padding: 0 6px;
+  padding: 0 8px;
   border-radius: 4px;
+  background: var(--kvcs-hover);
   font-size: 12px;
   font-weight: 600;
   line-height: 22px;
   text-align: center;
   transition: background-color 150ms ease-out, transform 100ms;
 }
-#kvcs-panel .kvcs-bar button:hover { background: var(--kvcs-hover); }
-#kvcs-panel .kvcs-bar button:active { background: var(--kvcs-control); transform: scale(0.95); }
+#kvcs-panel .kvcs-bar button:hover { background: var(--kvcs-control); }
+#kvcs-panel .kvcs-bar button:active { background: var(--kvcs-name-hover); transform: scale(0.97); }
 #kvcs-panel .kvcs-bar button:focus-visible,
 #kvcs-panel .kvcs-more:focus-visible { outline: 2px solid var(--kvcs-green); outline-offset: 1px; }
 

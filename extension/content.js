@@ -47,8 +47,6 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  const fmtOffset = (ms) => `${ms >= 0 ? '+' : ''}${(ms / 1000).toFixed(0)}s`;
-
   // ---------- render (mesma estrutura/medidas do chat nativo) ----------
   const EMOTE_RE = /\[emote:(\d+):([^\]]*)\]/g;
 
@@ -247,11 +245,11 @@
       if (c.panel.previousElementSibling !== native) native.after(c.panel);
       c.panel.classList.remove('kvcs-floating');
       native.classList.toggle('kvcs-native-hidden', !c.showNative);
-      c.panel.classList.toggle('kvcs-hidden', c.showNative);
+      c.panel.classList.toggle('kvcs-native-mode', c.showNative);
     } else if (c.panel.parentElement !== document.body) {
       document.body.appendChild(c.panel);
       c.panel.classList.add('kvcs-floating');
-      c.panel.classList.remove('kvcs-hidden');
+      c.panel.classList.remove('kvcs-native-mode');
     }
   }
 
@@ -260,15 +258,11 @@
     el.id = 'kvcs-panel';
     el.innerHTML = `
       <div class="kvcs-bar">
-        <span class="kvcs-dot" title="Chat sincronizado com o vídeo"></span>
+        <span class="kvcs-dot"></span>
         <span class="kvcs-title">Sincronizado</span>
         <span class="kvcs-rate"></span>
         <span class="kvcs-spacer"></span>
-        <button type="button" data-off="-1000" title="Mostrar o chat 1s antes">−1s</button>
-        <b class="kvcs-offval" title="Ajuste fino do chat"></b>
-        <button type="button" data-off="1000" title="Mostrar o chat 1s depois">+1s</button>
-        <button type="button" data-off="reset" title="Zerar ajuste">↺</button>
-        <button type="button" data-act="native" title="Alternar para o chat original da Kick">⇄</button>
+        <button type="button" class="kvcs-switch" data-act="native">Chat original</button>
       </div>
       <div class="kvcs-list" role="log"></div>
       <button type="button" class="kvcs-more" hidden>Novas mensagens ↓</button>
@@ -277,20 +271,25 @@
       const b = ev.target.closest('button');
       if (!b) return;
       if (b.classList.contains('kvcs-more')) { scrollToBottom(c); return; }
-      if (b.dataset.act === 'native') { c.showNative = !c.showNative; mountPanel(c); return; }
-      if (b.dataset.off) {
-        c.offsetMs = b.dataset.off === 'reset' ? 0 : c.offsetMs + Number(b.dataset.off);
-        try { chrome.storage?.local.set({ kvcsOffsetMs: c.offsetMs }); } catch { /* ok */ }
-        el.querySelector('.kvcs-offval').textContent = fmtOffset(c.offsetMs);
-        if (c.meta && c.video) resetTo(c, currentAbs(c));
-      }
+      if (b.dataset.act === 'native') setNativeMode(c, !c.showNative);
     });
     c.panel = el;
     c.list = el.querySelector('.kvcs-list');
     c.more = el.querySelector('.kvcs-more');
     c.list.addEventListener('scroll', () => { if (isAtBottom(c)) c.more.hidden = true; }, { passive: true });
-    el.querySelector('.kvcs-offval').textContent = fmtOffset(c.offsetMs);
+    setNativeMode(c, false);
+  }
+
+  // Alterna entre o chat sincronizado e o replay original da Kick.
+  // No modo original o painel encolhe para só a barra, que continua com o botão de voltar.
+  function setNativeMode(c, on) {
+    c.showNative = on;
+    c.panel.querySelector('.kvcs-title').textContent = on ? 'Chat original da Kick' : 'Sincronizado';
+    const btn = c.panel.querySelector('.kvcs-switch');
+    btn.textContent = on ? 'Voltar ao sincronizado' : 'Chat original';
+    btn.title = on ? 'Voltar ao chat sincronizado com o vídeo' : 'Mostrar o replay original da Kick';
     mountPanel(c);
+    if (!on) scrollToBottom(c);
   }
 
   function setStatus(c, text) {
@@ -322,7 +321,7 @@
   }
 
   // ---------- sincronização ----------
-  const currentAbs = (c) => c.meta.startMs + c.video.currentTime * 1000 + c.offsetMs;
+  const currentAbs = (c) => c.meta.startMs + c.video.currentTime * 1000;
 
   function resetTo(c, absMs) {
     c.gen++;
@@ -372,14 +371,16 @@
   }
 
   // ---------- ciclo de vida (Kick é SPA) ----------
-  async function waitForVideo(timeoutMs = 15000) {
-    const t0 = Date.now();
-    while (Date.now() - t0 < timeoutMs) {
+  // Basta o <video> existir: o player pode ficar sem carregar (autoplay bloqueado,
+  // aba em segundo plano) e só carregar quando o usuário der play. Os eventos do
+  // vídeo (play/seeked/timeupdate) cuidam do resto.
+  async function waitForVideo(c) {
+    for (;;) {
+      if (ctx !== c) return null;
       const v = document.querySelector('video');
-      if (v && v.readyState >= 1) return v;
-      await sleep(300);
+      if (v) return v;
+      await sleep(500);
     }
-    return null;
   }
 
   function teardown() {
@@ -395,25 +396,19 @@
     teardown();
     const c = {
       uuid, gen: 0, msgs: [], seen: new Set(), inflight: 0,
-      renderedUntil: 0, fetchCursor: 0, offsetMs: 0, showNative: false, error: '',
+      renderedUntil: 0, fetchCursor: 0, showNative: false, error: '',
     };
     ctx = c;
-    try {
-      const stored = await chrome.storage?.local.get('kvcsOffsetMs');
-      c.offsetMs = stored?.kvcsOffsetMs ?? 0;
-    } catch { /* storage indisponível: segue com 0 */ }
-
     buildPanel(c);
     setStatus(c, 'carregando VOD…');
     try {
       c.meta = await loadVodMeta(uuid, slug);
-      c.video = await waitForVideo();
-      if (!c.video) throw new Error('player não encontrado');
     } catch (e) {
       setStatus(c, `falhou: ${e.message}`);
       return;
     }
-    if (ctx !== c) return;
+    c.video = await waitForVideo(c);
+    if (ctx !== c || !c.video) return;
     setStatus(c, '');
     c.onVideoEvent = () => tick(c);
     bindVideo(c, c.video);
