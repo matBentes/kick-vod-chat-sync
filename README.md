@@ -64,6 +64,12 @@ docs/             imagens deste README
 
 Não tem etapa de build: o que está em `extension/` é o que roda.
 
+## Apoie
+
+A extensão é gratuita e continua sendo. Se ela te ajudou, dá para mandar um café:
+
+[![Apoie no Ko-fi](https://img.shields.io/badge/Ko--fi-apoiar-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/matbentes)
+
 ## Licença
 
 [MIT](LICENSE) © 2026 Mateus Bentes
