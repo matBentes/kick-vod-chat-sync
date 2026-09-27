@@ -43,6 +43,8 @@ Não tem nada para configurar: o chat fica sincronizado o tempo todo. A barra no
 | --- | --- |
 | **Sincronizado 1.5x** | Chat da extensão ativo; a velocidade só aparece fora de 1x |
 | **Chat original** | Mostra o replay original da Kick. A barra continua no topo com **Voltar ao sincronizado** |
+
+O replay da Kick nunca é pausado, escondido ou realinhado pela extensão: ele continua rodando por baixo do painel, do jeito que a Kick faz. Ao trocar para **Chat original**, você vê o estado real dele, inclusive o atraso que ele acumula em 1.5x/2x.
 | **Novas mensagens ↓** | Aparece se você rolar para cima; o chat não te puxa para baixo enquanto você lê |
 
 ## Limitações

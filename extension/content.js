@@ -237,14 +237,18 @@
   }
 
   // ---------- UI ----------
-  // Encaixa o painel no lugar da lista nativa (#chatroom-messages) e esconde a nativa.
+  // Encaixa o painel por cima da lista nativa (#chatroom-messages).
+  // A lista da Kick NÃO é escondida (display: none): escondida, ela para de acumular atraso
+  // e ao reaparecer parece sincronizada. Coberta, continua rodando exatamente como a Kick
+  // faz — ao trocar para o chat original você vê o estado real dele.
   // Sem lista nativa (layout mudou / chat fechado): painel flutuante à direita.
   function mountPanel(c) {
     const native = document.getElementById('chatroom-messages');
     if (native && native.parentElement) {
       if (c.panel.previousElementSibling !== native) native.after(c.panel);
       c.panel.classList.remove('kvcs-floating');
-      native.classList.toggle('kvcs-native-hidden', !c.showNative);
+      if (native.inert !== !c.showNative) native.inert = !c.showNative; // fora do foco/leitor de tela enquanto coberta
+      c.native = native;
       c.panel.classList.toggle('kvcs-native-mode', c.showNative);
     } else if (c.panel.parentElement !== document.body) {
       document.body.appendChild(c.panel);
@@ -387,7 +391,7 @@
     if (!ctx) return;
     clearInterval(ctx.timer);
     if (ctx.boundVideo) VIDEO_EVENTS.forEach((e) => ctx.boundVideo.removeEventListener(e, ctx.onVideoEvent));
-    document.querySelectorAll('.kvcs-native-hidden').forEach((n) => n.classList.remove('kvcs-native-hidden'));
+    if (ctx.native) ctx.native.inert = false;
     ctx.panel?.remove();
     ctx = null;
   }

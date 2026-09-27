@@ -22,9 +22,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* no lugar da lista nativa: ocupa o contêiner sem esticá-lo
-   (o nativo usa contain: strict; aqui o equivalente é absolute + inset) */
-#kvcs-panel:not(.kvcs-floating) { position: absolute; inset: 0; }
+/* por cima da lista nativa: ocupa o contêiner sem esticá-lo e cobre a lista da Kick
+   (que continua rodando por baixo, sem ser escondida) */
+#kvcs-panel:not(.kvcs-floating) { position: absolute; inset: 0; z-index: 2; }
 /* modo "chat original": o painel vira só a barra, por cima do topo da lista nativa,
    para o botão de voltar continuar acessível */
 #kvcs-panel.kvcs-native-mode { bottom: auto; border-bottom: 1px solid var(--kvcs-hover); }
@@ -34,7 +34,6 @@
 #kvcs-panel.kvcs-native-mode .kvcs-rate { display: none; }
 #kvcs-panel.kvcs-native-mode .kvcs-dot { background: var(--kvcs-muted); }
 #kvcs-panel.kvcs-floating .kvcs-switch { display: none; }
-.kvcs-native-hidden { display: none !important; }
 
 /* fallback quando a área do chat nativo não existe */
 #kvcs-panel.kvcs-floating {
