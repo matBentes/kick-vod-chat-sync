@@ -28,12 +28,12 @@ O painel ocupa o lugar da lista de mensagens da Kick e segue o visual do chat na
 
 ## Instalação
 
-1. Baixe o `kick-vod-chat-sync-vX.Y.Z.zip` da [última release](https://github.com/matBentes/kick-vod-chat-sync/releases/latest) e descompacte numa pasta que você não vá apagar.
+1. Na [última release](https://github.com/matBentes/kick-vod-chat-sync/releases/latest), baixe **Source code (zip)** e descompacte numa pasta que você não vá apagar (ou faça `git clone`).
 2. Abra `chrome://extensions` e ative o **Modo do desenvolvedor**.
-3. Clique em **Carregar sem compactação** e escolha a pasta descompactada.
+3. Clique em **Carregar sem compactação** e escolha a pasta **`extension/`** de dentro do que você baixou.
 4. Abra qualquer VOD (`kick.com/<canal>/videos/<id>`) e ajuste a velocidade no player.
 
-Também dá para clonar o repositório e carregar a pasta **`extension/`**. A extensão não está na Chrome Web Store.
+A extensão não está na Chrome Web Store.
 
 Funciona no Chrome e em navegadores baseados nele (Edge, Brave, Opera). No Firefox não foi testada.
 
