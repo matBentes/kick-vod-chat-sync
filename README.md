@@ -20,11 +20,6 @@ No replay de chat das VODs da Kick, as mensagens aparecem no ritmo do relógio. 
 
 O painel ocupa o lugar da lista de mensagens da Kick e segue o visual do chat nativo: horário da VOD, badges (nível, assinante, moderador, VIP, founder…), emotes, respostas, links e o tamanho de fonte que você configurou no chat.
 
-<p align="center">
-  <img src="docs/comparacao.png" width="744" alt="Mesmo trecho de uma VOD: à esquerda o chat da extensão, à direita o replay nativo da Kick">
-  <br>
-  <sub>Mesmo trecho de uma VOD: a extensão (esquerda) e o replay nativo (direita). Algumas mensagens foram desfocadas.</sub>
-</p>
 
 ## Instalação
 
@@ -68,10 +63,6 @@ docs/             imagens deste README
 ```
 
 Não tem etapa de build: o que está em `extension/` é o que roda.
-
-## Projetos relacionados
-
-- [Kick Extended](https://github.com/wisnuwirayuda15/kick-extended): userscript que troca o player da Kick por um próprio e inclui um replay de chat. Esta extensão faz o contrário: mantém o player da Kick e só corrige o chat.
 
 ## Licença
 
