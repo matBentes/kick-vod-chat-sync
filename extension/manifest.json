@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "VOD Chat Sync for Kick",
+  "name": "__MSG_extName__",
   "short_name": "VOD Chat Sync",
   "version": "0.5.2",
-  "description": "Chat das VODs da Kick sincronizado com o vídeo em qualquer velocidade (1.25x, 1.5x, 2x), com pause e seek.",
+  "default_locale": "en",
+  "description": "__MSG_extDescription__",
   "homepage_url": "https://github.com/matBentes/kick-vod-chat-sync",
   "icons": {
     "16": "icons/icon16.png",

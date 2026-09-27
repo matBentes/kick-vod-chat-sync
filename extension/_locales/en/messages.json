@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "VOD Chat Sync for Kick"
+  },
+  "extDescription": {
+    "message": "Keeps Kick VOD chat replay in sync with the video at any speed (1.25x, 1.5x, 2x), with pause and seek."
+  }
+}

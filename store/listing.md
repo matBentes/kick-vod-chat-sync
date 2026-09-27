@@ -1,20 +1,50 @@
-# Chrome Web Store: textos da ficha
+# Chrome Web Store listing
 
-Textos usados no painel do desenvolvedor. As imagens estão nesta pasta.
+Text used in the developer dashboard. Images: `en/` (default) and `pt/` (Portuguese localization).
 
-## Nome
-VOD Chat Sync for Kick
+Default language: **English**. Add **Português (Brasil)** as a second listing language with the PT text below.
 
-## Resumo (até 132 caracteres)
-Chat das VODs da Kick no ritmo do vídeo: 1.25x, 1.5x, 2x, com pausa e seek. / Kick VOD chat in sync at any speed.
+## Name
+VOD Chat Sync for Kick (comes from the manifest, same in both languages)
 
-## Categoria
-Entretenimento (Entertainment)
+## Category
+Entertainment
 
-## Idioma
-Português (Brasil)
+---
 
-## Descrição
+## English (default)
+
+### Summary
+Keeps Kick VOD chat replay in sync with the video at any speed (1.25x, 1.5x, 2x), with pause and seek.
+
+### Description
+
+Watching Kick VODs at 1.5x or 2x? Kick's chat replay shows messages at real-time pace, so the video runs ahead of the chat and reactions show up after the moment they're about.
+
+This extension replaces the message list with a chat that follows the video's clock:
+
+• Works at any speed (1.25x, 1.5x, 2x…)
+• Pauses with the video
+• Catches up when you skip to another point in the VOD
+• Same look as Kick's chat: VOD timestamp, badges, emotes, replies, links and your chat font size
+• "Original chat" button to see Kick's replay as it is, and "Back to synced" to return
+
+Nothing to configure: open a VOD and change the speed in the player. The panel is in English or Portuguese, following your browser's language.
+
+Privacy: no data is collected. Messages are fetched from the same endpoints the Kick website uses, straight from your browser. No server, no analytics.
+
+Open source (MIT): https://github.com/matBentes/kick-vod-chat-sync
+
+Independent project, not affiliated with Kick.
+
+---
+
+## Português (Brasil)
+
+### Resumo
+Chat das VODs da Kick sincronizado com o vídeo em qualquer velocidade (1.25x, 1.5x, 2x), com pause e seek.
+
+### Descrição
 
 Assiste VODs da Kick em 1.5x ou 2x? O replay do chat da Kick mostra as mensagens no ritmo do relógio, então o vídeo anda mais rápido que o chat e as reações chegam depois do lance.
 
@@ -26,7 +56,7 @@ Esta extensão coloca no lugar da lista de mensagens um chat que segue o tempo d
 • Visual igual ao chat da Kick: horário da VOD, badges, emotes, respostas, links e o tamanho de fonte que você configurou
 • Botão "Chat original" para ver o replay da Kick como ele é, e "Voltar ao sincronizado" para retornar
 
-Não tem nada para configurar: abra uma VOD e ajuste a velocidade no player.
+Não tem nada para configurar: abra uma VOD e ajuste a velocidade no player. O painel aparece em português ou inglês, conforme o idioma do navegador.
 
 Privacidade: a extensão não coleta nenhum dado. Ela busca as mensagens nas mesmas rotas que o site da Kick usa, direto do seu navegador. Sem servidor, sem analytics.
 
@@ -36,25 +66,21 @@ Projeto independente, sem afiliação com a Kick.
 
 ---
 
-Watching Kick VODs at 1.5x or 2x? Kick's chat replay plays at real-time pace, so reactions show up after the moment they're about. This extension replaces the message list with a chat that follows the video's clock: any speed, pause and seek, same look as Kick's chat. No data collected. Open source. Not affiliated with Kick.
+## Privacy practices tab
 
-## Privacidade (aba "Práticas de privacidade")
+**Single purpose:**
+Sync the Kick VOD chat replay with the video's playback time, so messages appear at the right moment at any playback speed.
 
-**Finalidade única:**
-Sincronizar o replay do chat das VODs da Kick com o tempo do vídeo, para que as mensagens apareçam no momento certo em qualquer velocidade de reprodução.
+**Host permission / content script justification:**
+The extension runs on kick.com VOD pages to read the video player's current time and show the synced chat in place of the message list. Messages are fetched from the same endpoints the website itself uses.
 
-**Justificativa do content script / acesso a kick.com:**
-A extensão precisa rodar nas páginas de VOD de kick.com para ler o tempo atual do player de vídeo e mostrar o chat sincronizado no lugar da lista de mensagens. As mensagens são buscadas nas mesmas rotas que o próprio site usa.
+**Remote code:** No, all code is in the package.
 
-**Código remoto:** Não. Todo o código está no pacote.
+**Data usage:** none (leave every category unchecked) and check the three certifications.
 
-**Dados coletados:** nenhum (não marcar nenhuma categoria).
-
-**Certificações:** marcar as três (não vende dados, não usa para fins não relacionados, não usa para crédito).
-
-**URL da política de privacidade:**
+**Privacy policy URL:**
 https://github.com/matBentes/kick-vod-chat-sync/blob/main/PRIVACY.md
 
 ## Links
-- Site: https://github.com/matBentes/kick-vod-chat-sync
-- Suporte: https://github.com/matBentes/kick-vod-chat-sync/issues
+- Homepage: https://github.com/matBentes/kick-vod-chat-sync
+- Support: https://github.com/matBentes/kick-vod-chat-sync/issues

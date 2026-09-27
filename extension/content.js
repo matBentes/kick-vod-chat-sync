@@ -14,6 +14,35 @@
   const MAX_INFLIGHT = 2;
   const WEB_API = 'https://web.kick.com/api/v1';
 
+  // Textos do painel: português se o navegador estiver em PT, inglês no resto.
+  const STRINGS = {
+    en: {
+      synced: 'Synced', nativeTitle: "Kick's original chat",
+      toNative: 'Original chat', toSynced: 'Back to synced',
+      toNativeTip: "Show Kick's original chat replay", toSyncedTip: 'Back to the chat synced with the video',
+      more: 'New messages ↓', paused: 'paused', loading: 'loading VOD…',
+      failed: 'failed: ', error: 'error: ', httpAt: 'at',
+      noChannelId: (slug) => `channel "${slug}" has no id in the API`,
+      vodNotListed: (n) => `VOD is not in the channel's list (${n} videos)`,
+      noStart: 'VOD has no start_time',
+    },
+    pt: {
+      synced: 'Sincronizado', nativeTitle: 'Chat original da Kick',
+      toNative: 'Chat original', toSynced: 'Voltar ao sincronizado',
+      toNativeTip: 'Mostrar o replay original da Kick', toSyncedTip: 'Voltar ao chat sincronizado com o vídeo',
+      more: 'Novas mensagens ↓', paused: 'pausado', loading: 'carregando VOD…',
+      failed: 'falhou: ', error: 'erro: ', httpAt: 'em',
+      noChannelId: (slug) => `canal "${slug}" sem id na API`,
+      vodNotListed: (n) => `VOD não está na lista do canal (${n} vídeos)`,
+      noStart: 'VOD sem start_time',
+    },
+  };
+  const uiLang = (() => {
+    try { return globalThis.chrome?.i18n?.getUILanguage?.() || navigator.language || 'en'; }
+    catch { return navigator.language || 'en'; }
+  })();
+  const T = /^pt\b/i.test(uiLang) ? STRINGS.pt : STRINGS.en;
+
   let ctx = null; // estado da VOD atual
 
   // ---------- utils ----------
@@ -25,7 +54,7 @@
   const getJSON = async (url) => {
     const r = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
     if (!r.ok) {
-      const err = new Error(`HTTP ${r.status} em ${url.replace(/\?.*/, '')}`);
+      const err = new Error(`HTTP ${r.status} ${T.httpAt} ${url.replace(/\?.*/, '')}`);
       err.status = r.status;
       throw err;
     }
@@ -179,15 +208,15 @@
   async function loadVodMeta(uuid, slug) {
     const ch = await getJSON(`/api/v2/channels/${slug}`);
     const channelId = ch?.id;
-    if (!channelId) throw new Error(`canal "${slug}" sem id na API`);
+    if (!channelId) throw new Error(T.noChannelId(slug));
 
     const list = await getJSON(`${WEB_API}/channels/${channelId}/videos`);
     const items = list?.data ?? [];
     const vod = items.find((v) => v?.id === uuid);
-    if (!vod) throw new Error(`VOD não está na lista do canal (${items.length} vídeos)`);
+    if (!vod) throw new Error(T.vodNotListed(items.length));
 
     const startMs = parseKickDate(vod.start_time);
-    if (!Number.isFinite(startMs)) throw new Error('VOD sem start_time');
+    if (!Number.isFinite(startMs)) throw new Error(T.noStart);
     // badges de assinante do canal: [{ months, badge_image: { src } }]
     return { channelId, startMs, subBadges: ch.subscriber_badges ?? [] };
   }
@@ -231,7 +260,7 @@
       const gen = c.gen;
       fetchWindow(c.meta.channelId, at)
         .then((msgs) => { c.error = ''; if (ctx === c && gen === c.gen) ingest(c, msgs); })
-        .catch((e) => { c.error = `erro: ${e.message}`; })
+        .catch((e) => { c.error = T.error + e.message; })
         .finally(() => { c.inflight--; });
     }
   }
@@ -263,13 +292,13 @@
     el.innerHTML = `
       <div class="kvcs-bar">
         <span class="kvcs-dot"></span>
-        <span class="kvcs-title">Sincronizado</span>
+        <span class="kvcs-title">${T.synced}</span>
         <span class="kvcs-rate"></span>
         <span class="kvcs-spacer"></span>
-        <button type="button" class="kvcs-switch" data-act="native">Chat original</button>
+        <button type="button" class="kvcs-switch" data-act="native" title="${T.toNativeTip}">${T.toNative}</button>
       </div>
       <div class="kvcs-list" role="log"></div>
-      <button type="button" class="kvcs-more" hidden>Novas mensagens ↓</button>
+      <button type="button" class="kvcs-more" hidden>${T.more}</button>
       <div class="kvcs-status"></div>`;
     el.addEventListener('click', (ev) => {
       const b = ev.target.closest('button');
@@ -288,10 +317,10 @@
   // No modo original o painel encolhe para só a barra, que continua com o botão de voltar.
   function setNativeMode(c, on) {
     c.showNative = on;
-    c.panel.querySelector('.kvcs-title').textContent = on ? 'Chat original da Kick' : 'Sincronizado';
+    c.panel.querySelector('.kvcs-title').textContent = on ? T.nativeTitle : T.synced;
     const btn = c.panel.querySelector('.kvcs-switch');
-    btn.textContent = on ? 'Voltar ao sincronizado' : 'Chat original';
-    btn.title = on ? 'Voltar ao chat sincronizado com o vídeo' : 'Mostrar o replay original da Kick';
+    btn.textContent = on ? T.toSynced : T.toNative;
+    btn.title = on ? T.toSyncedTip : T.toNativeTip;
     mountPanel(c);
     if (!on) scrollToBottom(c);
   }
@@ -371,7 +400,7 @@
     const rateEl = c.panel.querySelector('.kvcs-rate');
     const rateTxt = rate !== 1 ? `${rate}x` : '';
     if (rateEl.textContent !== rateTxt) rateEl.textContent = rateTxt;
-    setStatus(c, c.error || (c.video.paused ? 'pausado' : ''));
+    setStatus(c, c.error || (c.video.paused ? T.paused : ''));
   }
 
   // ---------- ciclo de vida (Kick é SPA) ----------
@@ -404,11 +433,11 @@
     };
     ctx = c;
     buildPanel(c);
-    setStatus(c, 'carregando VOD…');
+    setStatus(c, T.loading);
     try {
       c.meta = await loadVodMeta(uuid, slug);
     } catch (e) {
-      setStatus(c, `falhou: ${e.message}`);
+      setStatus(c, T.failed + e.message);
       return;
     }
     c.video = await waitForVideo(c);

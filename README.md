@@ -1,77 +1,80 @@
 # VOD Chat Sync for Kick
 
-Extensão para Chrome que deixa o **chat das VODs da Kick no mesmo ritmo do vídeo**, em 1.25x, 1.5x, 2x, com pause e seek.
+Chrome extension that keeps **Kick's VOD chat replay in sync with the video** at any playback speed (1.25x, 1.5x, 2x), with pause and seek.
 
-<sub>🇺🇸 Chrome extension that keeps Kick's VOD chat replay in sync with the video at any playback speed.</sub>
+<sub>🇧🇷 [Português](README.pt-BR.md)</sub>
 
 <p align="center">
-  <img src="docs/chat.png" width="340" alt="Painel do chat sincronizado no lugar do chat da Kick, com a barra 'Sincronizado 1.5x' em destaque">
+  <img src="docs/chat.png" width="340" alt="Synced chat panel in place of Kick's chat, with the 'Synced 1.5x' bar highlighted">
 </p>
 
-## O problema
+## The problem
 
-No replay de chat das VODs da Kick, as mensagens aparecem no ritmo do relógio. Se você assiste em **1.5x** ou **2x**, o vídeo anda mais rápido que o chat, e as reações chegam depois do lance que elas comentam.
+Kick's VOD chat replay shows messages at wall-clock pace. If you watch at **1.5x** or **2x**, the video runs ahead of the chat and reactions show up after the moment they're about.
 
-## Como a extensão resolve
+## How it works
 
-- Lê o tempo atual do vídeo (`currentTime`) e converte para o horário real da live.
-- Busca as mensagens na mesma API que o site da Kick usa, um pouco à frente do vídeo.
-- Mostra cada mensagem **quando o vídeo chega nela**. Por isso funciona em qualquer velocidade, pausa junto e se reposiciona quando você pula para outro ponto.
+- Reads the video's current time (`currentTime`) and converts it to the stream's real time.
+- Fetches messages from the same API the Kick website uses, a little ahead of the video.
+- Shows each message **when the video reaches it**. That's why it works at any speed, pauses with the video and catches up when you skip to another point.
 
-O painel ocupa o lugar da lista de mensagens da Kick e segue o visual do chat nativo: horário da VOD, badges (nível, assinante, moderador, VIP, founder…), emotes, respostas, links e o tamanho de fonte que você configurou no chat.
+The panel takes the place of Kick's message list and follows the native chat's look: VOD timestamp, badges (level, subscriber, moderator, VIP, founder…), emotes, replies, links and the font size you set in the chat.
 
+## Install
 
-## Instalação
+Submitted to the Chrome Web Store and under review. Until it's approved, install it manually:
 
-1. Na [última release](https://github.com/matBentes/kick-vod-chat-sync/releases/latest), baixe **Source code (zip)** e descompacte numa pasta que você não vá apagar (ou faça `git clone`).
-2. Abra `chrome://extensions` e ative o **Modo do desenvolvedor**.
-3. Clique em **Carregar sem compactação** e escolha a pasta **`extension/`** de dentro do que você baixou.
-4. Abra qualquer VOD (`kick.com/<canal>/videos/<id>`) e ajuste a velocidade no player.
+1. From the [latest release](https://github.com/matBentes/kick-vod-chat-sync/releases/latest), download **Source code (zip)** and unzip it somewhere you won't delete (or `git clone`).
+2. Open `chrome://extensions` and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the **`extension/`** folder from what you downloaded.
+4. Open any VOD (`kick.com/<channel>/videos/<id>`) and change the speed in the player.
 
-A extensão foi enviada para a Chrome Web Store e está em análise. Até ser aprovada, a instalação é por aqui.
+Works in Chrome and Chromium-based browsers (Edge, Brave, Opera). Not tested on Firefox.
 
-Funciona no Chrome e em navegadores baseados nele (Edge, Brave, Opera). No Firefox não foi testada.
+## Controls
 
-## Controles
+Nothing to configure: the chat stays in sync all the time. The panel text follows Chrome's language (English or Portuguese). The top bar shows the state:
 
-Não tem nada para configurar: o chat fica sincronizado o tempo todo. A barra no topo mostra o estado:
-
-| Controle | O que faz |
+| Control | What it does |
 | --- | --- |
-| **Sincronizado 1.5x** | Chat da extensão ativo; a velocidade só aparece fora de 1x |
-| **Chat original** | Mostra o replay original da Kick. A barra continua no topo com **Voltar ao sincronizado** |
-| **Novas mensagens ↓** | Aparece se você rolar para cima; o chat não te puxa para baixo enquanto você lê |
+| **Synced 1.5x** | Extension chat is active; the speed only shows when it isn't 1x |
+| **Original chat** | Shows Kick's original replay. The bar stays on top with **Back to synced** |
+| **New messages ↓** | Shows up if you scroll up; the chat doesn't pull you down while you read |
 
-O replay da Kick nunca é pausado, escondido ou realinhado pela extensão: ele continua rodando por baixo do painel, do jeito que a Kick faz. Ao trocar para **Chat original**, você vê o estado real dele, inclusive o atraso que ele acumula em 1.5x/2x.
+The extension never pauses, hides or realigns Kick's replay: it keeps running under the panel, the way Kick does it. When you switch to **Original chat** you see its real state, including the lag it builds up at 1.5x/2x.
 
-## Limitações
+## Limitations
 
-- Usa rotas internas da Kick (`web.kick.com/api/v1/...`), que não são documentadas. Se a Kick mudar, pode parar de funcionar; nesse caso o painel mostra o erro.
-- Os ícones de moderador, VIP, founder, OG e sub gifter são desenhos próprios nas cores da Kick. Badges de nível, de assinante e globais usam as imagens oficiais que a API já envia.
-- Não é um projeto oficial nem afiliado à Kick.
+- Uses Kick's internal endpoints (`web.kick.com/api/v1/...`), which aren't documented. If Kick changes them it may stop working; the panel then shows the error.
+- The moderator, VIP, founder, OG and sub gifter icons are original drawings in Kick's colors. Level, subscriber and global badges use the official images the API already sends.
+- Not an official project and not affiliated with Kick.
 
-## Estrutura
+## Privacy
+
+No data is collected. Requests go straight from your browser to Kick, like the ones the site makes. See [PRIVACY.md](PRIVACY.md).
+
+## Project layout
 
 ```
 extension/
   manifest.json   Manifest V3
-  content.js      busca das mensagens + sincronização com o vídeo
-  badges.js       ícones dos badges de canal
-  styles.css      visual (medidas tiradas do chat nativo)
+  content.js      message fetching + sync with the video
+  badges.js       channel badge icons
+  styles.css      look (measurements taken from the native chat)
+  _locales/       store name and description (en, pt_BR)
   icons/
-docs/             imagens deste README
-store/            textos e imagens da ficha na Chrome Web Store
-PRIVACY.md        política de privacidade (nenhum dado é coletado)
+docs/             images for this README
+store/            Chrome Web Store listing text and images
 ```
 
-Não tem etapa de build: o que está em `extension/` é o que roda.
+No build step: what's in `extension/` is what runs.
 
-## Apoie
+## Support
 
-A extensão é gratuita e continua sendo. Se ela te ajudou, dá para mandar um café:
+The extension is free and will stay free. If it helped you, you can buy me a coffee:
 
-[![Apoie no Ko-fi](https://img.shields.io/badge/Ko--fi-apoiar-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/matbentes)
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/matbentes)
 
-## Licença
+## License
 
 [MIT](LICENSE) © 2026 Mateus Bentes
