@@ -1,4 +1,4 @@
-# Kick VOD Chat Sync
+# VOD Chat Sync for Kick
 
 Extensão para Chrome que deixa o **chat das VODs da Kick no mesmo ritmo do vídeo**, em 1.25x, 1.5x, 2x, com pause e seek.
 
@@ -28,7 +28,7 @@ O painel ocupa o lugar da lista de mensagens da Kick e segue o visual do chat na
 3. Clique em **Carregar sem compactação** e escolha a pasta **`extension/`** de dentro do que você baixou.
 4. Abra qualquer VOD (`kick.com/<canal>/videos/<id>`) e ajuste a velocidade no player.
 
-A extensão não está na Chrome Web Store.
+A extensão foi enviada para a Chrome Web Store e está em análise. Até ser aprovada, a instalação é por aqui.
 
 Funciona no Chrome e em navegadores baseados nele (Edge, Brave, Opera). No Firefox não foi testada.
 
@@ -40,9 +40,9 @@ Não tem nada para configurar: o chat fica sincronizado o tempo todo. A barra no
 | --- | --- |
 | **Sincronizado 1.5x** | Chat da extensão ativo; a velocidade só aparece fora de 1x |
 | **Chat original** | Mostra o replay original da Kick. A barra continua no topo com **Voltar ao sincronizado** |
+| **Novas mensagens ↓** | Aparece se você rolar para cima; o chat não te puxa para baixo enquanto você lê |
 
 O replay da Kick nunca é pausado, escondido ou realinhado pela extensão: ele continua rodando por baixo do painel, do jeito que a Kick faz. Ao trocar para **Chat original**, você vê o estado real dele, inclusive o atraso que ele acumula em 1.5x/2x.
-| **Novas mensagens ↓** | Aparece se você rolar para cima; o chat não te puxa para baixo enquanto você lê |
 
 ## Limitações
 
@@ -60,6 +60,8 @@ extension/
   styles.css      visual (medidas tiradas do chat nativo)
   icons/
 docs/             imagens deste README
+store/            textos e imagens da ficha na Chrome Web Store
+PRIVACY.md        política de privacidade (nenhum dado é coletado)
 ```
 
 Não tem etapa de build: o que está em `extension/` é o que roda.
