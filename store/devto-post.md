@@ -49,4 +49,4 @@ No data is collected. No server, no analytics. Requests go straight from your br
 - Chrome Web Store: https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg
 - Source: https://github.com/matBentes/kick-vod-chat-sync
 
-Hopefully Kick fixes this natively one day and this extension becomes useless. Until then, enjoy your 1.5x VODs with a chat that keeps up. Bug reports and ideas are welcome in the issues.
+Hopefully Kick fixes this natively one day and this extension becomes useless. Until then, enjoy your VODs at any speed with a chat that keeps up. Bug reports and ideas are welcome in the issues.
