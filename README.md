@@ -4,6 +4,8 @@ Chrome extension that keeps **Kick's VOD chat replay in sync with the video** at
 
 <sub>🇧🇷 [Português](README.pt-BR.md)</sub>
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+
 <p align="center">
   <img src="docs/chat.png" width="340" alt="Synced chat panel in place of Kick's chat, with the 'Synced 1.5x' bar highlighted">
 </p>
@@ -22,12 +24,17 @@ The panel takes the place of Kick's message list and follows the native chat's l
 
 ## Install
 
-Submitted to the Chrome Web Store and under review. Until it's approved, install it manually:
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+
+Install it from the **[Chrome Web Store](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)**, open any VOD (`kick.com/<channel>/videos/<id>`) and change the speed in the player.
+
+<details>
+<summary>Manual install (from source)</summary>
 
 1. From the [latest release](https://github.com/matBentes/kick-vod-chat-sync/releases/latest), download **Source code (zip)** and unzip it somewhere you won't delete (or `git clone`).
 2. Open `chrome://extensions` and turn on **Developer mode**.
-3. Click **Load unpacked** and pick the **`extension/`** folder from what you downloaded.
-4. Open any VOD (`kick.com/<channel>/videos/<id>`) and change the speed in the player.
+3. Click **Load unpacked** and pick the **`extension/`** folder.
+</details>
 
 Works in Chrome and Chromium-based browsers (Edge, Brave, Opera). Not tested on Firefox.
 

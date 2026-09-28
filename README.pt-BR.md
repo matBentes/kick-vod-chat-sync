@@ -4,6 +4,8 @@ Extensão para Chrome que deixa o **chat das VODs da Kick no mesmo ritmo do víd
 
 <sub>🇺🇸 [English](README.md)</sub>
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+
 <p align="center">
   <img src="docs/chat-pt.png" width="340" alt="Painel do chat sincronizado no lugar do chat da Kick, com a barra 'Sincronizado 1.5x' em destaque">
 </p>
@@ -23,12 +25,17 @@ O painel ocupa o lugar da lista de mensagens da Kick e segue o visual do chat na
 
 ## Instalação
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+
+Instale pela **[Chrome Web Store](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)**, abra qualquer VOD (`kick.com/<canal>/videos/<id>`) e ajuste a velocidade no player.
+
+<details>
+<summary>Instalação manual (pelo código)</summary>
+
 1. Na [última release](https://github.com/matBentes/kick-vod-chat-sync/releases/latest), baixe **Source code (zip)** e descompacte numa pasta que você não vá apagar (ou faça `git clone`).
 2. Abra `chrome://extensions` e ative o **Modo do desenvolvedor**.
-3. Clique em **Carregar sem compactação** e escolha a pasta **`extension/`** de dentro do que você baixou.
-4. Abra qualquer VOD (`kick.com/<canal>/videos/<id>`) e ajuste a velocidade no player.
-
-A extensão foi enviada para a Chrome Web Store e está em análise. Até ser aprovada, a instalação é por aqui.
+3. Clique em **Carregar sem compactação** e escolha a pasta **`extension/`**.
+</details>
 
 Funciona no Chrome e em navegadores baseados nele (Edge, Brave, Opera). No Firefox não foi testada.
 
