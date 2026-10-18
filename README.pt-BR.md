@@ -47,9 +47,24 @@ Não tem nada para configurar: o chat fica sincronizado o tempo todo. Os textos 
 | --- | --- |
 | **Sincronizado 1.5x** | Chat da extensão ativo; a velocidade só aparece fora de 1x |
 | **Chat original** | Mostra o replay original da Kick. A barra continua no topo com **Voltar ao sincronizado** |
+| **🕒 (relógio)** | Mostra ou oculta os horários; a escolha fica salva |
 | **Novas mensagens ↓** | Aparece se você rolar para cima; o chat não te puxa para baixo enquanto você lê |
 
 O replay da Kick nunca é pausado, escondido ou realinhado pela extensão: ele continua rodando por baixo do painel, do jeito que a Kick faz. Ao trocar para **Chat original**, você vê o estado real dele, inclusive o atraso que ele acumula em 1.5x/2x.
+
+### Ganchos estáveis para scripts
+
+Se você personaliza o painel com userscript ou CSS próprio, estes seletores são mantidos estáveis; qualquer mudança neles aparece como *breaking* no [changelog](CHANGELOG.md):
+
+| Seletor | O que é |
+| --- | --- |
+| `#kvcs-panel` | O painel do chat sincronizado |
+| `.kvcs-row` | Uma mensagem (`data-t` = horário da mensagem em ms desde a época) |
+| `.kvcs-time` | Horário na VOD: `MM:SS` na primeira hora, `HH:MM:SS` depois |
+| `.kvcs-user` / `.kvcs-content` | Nome do usuário / texto da mensagem |
+| `#kvcs-panel.kvcs-hide-time` | Presente enquanto os horários estão ocultos pelo botão do relógio |
+
+O resto da marcação do painel pode mudar entre versões.
 
 ## Limitações
 

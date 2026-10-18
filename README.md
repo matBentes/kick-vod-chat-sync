@@ -46,9 +46,24 @@ Nothing to configure: the chat stays in sync all the time. The panel text follow
 | --- | --- |
 | **Synced 1.5x** | Extension chat is active; the speed only shows when it isn't 1x |
 | **Original chat** | Shows Kick's original replay. The bar stays on top with **Back to synced** |
+| **🕒 (clock)** | Shows or hides the timestamps; the choice is remembered |
 | **New messages ↓** | Shows up if you scroll up; the chat doesn't pull you down while you read |
 
 The extension never pauses, hides or realigns Kick's replay: it keeps running under the panel, the way Kick does it. When you switch to **Original chat** you see its real state, including the lag it builds up at 1.5x/2x.
+
+### Stable hooks for scripts
+
+If you customize the panel with a userscript or custom CSS, these selectors are kept stable; a change to any of them will be called out as breaking in the [changelog](CHANGELOG.md):
+
+| Selector | What it is |
+| --- | --- |
+| `#kvcs-panel` | The synced chat panel |
+| `.kvcs-row` | One message (`data-t` = message time in ms since epoch) |
+| `.kvcs-time` | VOD timestamp: `MM:SS` in the first hour, `HH:MM:SS` after |
+| `.kvcs-user` / `.kvcs-content` | Username / message text |
+| `#kvcs-panel.kvcs-hide-time` | Present while timestamps are hidden by the clock button |
+
+Anything else in the panel's markup may change between versions.
 
 ## Limitations
 
