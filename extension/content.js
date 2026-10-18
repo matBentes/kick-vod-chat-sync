@@ -419,10 +419,18 @@
     c.list = el.querySelector('.kvcs-list');
     c.more = el.querySelector('.kvcs-more');
     c.rateEl = el.querySelector('.kvcs-rate');
-    // "colado no fim" é decidido pelo usuário (scroll), não medido a cada linha inserida
+    // "Colado no fim" é decidido pelo usuário, não medido a cada linha inserida.
+    // Só um scroll causado por ele (roda, toque, teclado, clique) solta a lista do fim:
+    // quando a Kick move um ancestral do chat, o navegador zera o scrollTop e dispara
+    // "scroll" sozinho — isso não pode ser lido como "o usuário subiu".
+    const markUser = () => { c.userScrollAt = performance.now(); };
+    for (const ev of ['wheel', 'touchmove', 'pointerdown', 'keydown']) {
+      c.list.addEventListener(ev, markUser, { passive: true });
+    }
     c.list.addEventListener('scroll', () => {
-      c.stick = isAtBottom(c);
-      if (c.stick) c.more.hidden = true;
+      if (isAtBottom(c)) { c.stick = true; c.more.hidden = true; return; }
+      if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = false;
+      else if (c.stick) c.list.scrollTop = c.list.scrollHeight; // scroll que ninguém pediu: volta ao fim
     }, { passive: true });
     setShowTime(c, loadShowTime());
     setNativeMode(c, false);
