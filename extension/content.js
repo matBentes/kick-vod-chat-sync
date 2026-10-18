@@ -264,16 +264,26 @@
     const channelId = ch?.id;
     if (!channelId) throw new Error(T.noChannelId(slug));
 
+    // A lista só traz as ~30 VODs mais recentes (sem paginação). Para as antigas, o início
+    // sai da própria uuid: é UUIDv7, e o timestamp embutido é exatamente o start_time
+    // (conferido em 83 VODs de 3 canais, out/2026).
     const list = await getJSONRetry(`${WEB_API}/channels/${channelId}/videos`, signal);
     const items = list?.data ?? [];
     const vod = items.find((v) => v?.id === uuid);
-    if (!vod) throw new Error(T.vodNotListed(items.length));
-
-    const startMs = parseKickDate(vod.start_time);
+    const startMs = vod ? parseKickDate(vod.start_time) : uuidV7Ms(uuid);
+    if (!vod && !Number.isFinite(startMs)) throw new Error(T.vodNotListed(items.length));
     if (!Number.isFinite(startMs)) throw new Error(T.noStart);
     // badges de assinante do canal: [{ months, badge_image: { src } }]
     return { channelId, startMs, subBadges: ch.subscriber_badges ?? [] };
   }
+
+  // UUIDv7: os 48 primeiros bits são o unix time em ms. NaN se não for v7.
+  const uuidV7Ms = (uuid) => {
+    const hex = String(uuid).replace(/-/g, '');
+    if (!/^[0-9a-f]{32}$/i.test(hex) || hex[12] !== '7') return NaN;
+    const ms = parseInt(hex.slice(0, 12), 16);
+    return ms > Date.UTC(2020, 0) && ms < Date.now() + 86_400_000 ? ms : NaN;
+  };
 
   // A API aceita "2026-09-26T08:00:00Z" (sem milissegundos).
   const toApiIso = (ms) => new Date(Math.floor(ms / 1000) * 1000).toISOString().replace('.000Z', 'Z');
@@ -683,7 +693,7 @@
   if (hook && typeof hook === 'object' && !(typeof Node !== 'undefined' && hook instanceof Node)) {
     Object.assign(hook, {
       normalize, renderRow, fetchWindow, loadVodMeta, setup, teardown, tick, getCtx: () => ctx,
-      parseKickDate, safeColor, prune, pumpFetches,
+      parseKickDate, safeColor, prune, pumpFetches, uuidV7Ms,
     });
     return;
   }
