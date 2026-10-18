@@ -25,6 +25,7 @@
       noChannelId: (slug) => `channel "${slug}" has no id in the API`,
       vodNotListed: (n) => `VOD is not in the channel's list (${n} videos)`,
       noStart: 'VOD has no start_time',
+      hideTime: 'Hide timestamps', showTime: 'Show timestamps',
     },
     pt: {
       synced: 'Sincronizado', nativeTitle: 'Chat original da Kick',
@@ -35,6 +36,7 @@
       noChannelId: (slug) => `canal "${slug}" sem id na API`,
       vodNotListed: (n) => `VOD não está na lista do canal (${n} vídeos)`,
       noStart: 'VOD sem start_time',
+      hideTime: 'Ocultar horários', showTime: 'Mostrar horários',
     },
   };
   const uiLang = (() => {
@@ -44,6 +46,16 @@
   const T = /^pt\b/i.test(uiLang) ? STRINGS.pt : STRINGS.en;
 
   let ctx = null; // estado da VOD atual
+
+  // Preferência "mostrar horários" (issue #1). Fica no localStorage do kick.com,
+  // que o content script já acessa — não precisa da permissão "storage".
+  const TIME_PREF_KEY = 'kvcs:showTime';
+  const loadShowTime = () => {
+    try { return localStorage.getItem(TIME_PREF_KEY) !== '0'; } catch { return true; }
+  };
+  const saveShowTime = (on) => {
+    try { localStorage.setItem(TIME_PREF_KEY, on ? '1' : '0'); } catch { /* sem storage: só nesta página */ }
+  };
 
   // ---------- utils ----------
   const parseKickDate = (s) => {
@@ -168,6 +180,9 @@
     reply: parseReply(m),
     html: renderContent(m.content),
   });
+
+  const CLOCK_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.5 1.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   const REPLY_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.5 3 1.5 7.5l5 4.5V9h3.25A3.25 3.25 0 0 1 13 12.25V14h1.5v-1.75A4.75 4.75 0 0 0 9.75 7.5H6.5V3Z"/></svg>';
@@ -298,6 +313,7 @@
         <span class="kvcs-title">${T.synced}</span>
         <span class="kvcs-rate"></span>
         <span class="kvcs-spacer"></span>
+        <button type="button" class="kvcs-icon-btn" data-act="time">${CLOCK_ICON}</button>
         <button type="button" class="kvcs-switch" data-act="native" title="${T.toNativeTip}">${T.toNative}</button>
       </div>
       <div class="kvcs-list" role="log"></div>
@@ -308,12 +324,26 @@
       if (!b) return;
       if (b.classList.contains('kvcs-more')) { scrollToBottom(c); return; }
       if (b.dataset.act === 'native') setNativeMode(c, !c.showNative);
+      if (b.dataset.act === 'time') { setShowTime(c, !c.showTime); saveShowTime(c.showTime); }
     });
     c.panel = el;
     c.list = el.querySelector('.kvcs-list');
     c.more = el.querySelector('.kvcs-more');
     c.list.addEventListener('scroll', () => { if (isAtBottom(c)) c.more.hidden = true; }, { passive: true });
+    setShowTime(c, loadShowTime());
     setNativeMode(c, false);
+  }
+
+  // Os horários continuam no DOM; só a classe do painel decide se aparecem.
+  function setShowTime(c, on) {
+    const stick = isAtBottom(c); // medir antes: as linhas quebram diferente e mudam de altura
+    c.showTime = on;
+    c.panel.classList.toggle('kvcs-hide-time', !on);
+    const btn = c.panel.querySelector('[data-act="time"]');
+    btn.setAttribute('aria-pressed', String(on));
+    btn.title = on ? T.hideTime : T.showTime;
+    btn.setAttribute('aria-label', btn.title);
+    if (stick) scrollToBottom(c);
   }
 
   // Alterna entre o chat sincronizado e o replay original da Kick.

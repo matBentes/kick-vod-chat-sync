@@ -31,7 +31,8 @@
 #kvcs-panel.kvcs-native-mode .kvcs-list,
 #kvcs-panel.kvcs-native-mode .kvcs-more,
 #kvcs-panel.kvcs-native-mode .kvcs-status,
-#kvcs-panel.kvcs-native-mode .kvcs-rate { display: none; }
+#kvcs-panel.kvcs-native-mode .kvcs-rate,
+#kvcs-panel.kvcs-native-mode .kvcs-icon-btn { display: none; }
 #kvcs-panel.kvcs-native-mode .kvcs-dot { background: var(--kvcs-muted); }
 #kvcs-panel.kvcs-floating .kvcs-switch { display: none; }
 
@@ -79,6 +80,12 @@
   text-align: center;
   transition: background-color 150ms ease-out, transform 100ms;
 }
+/* botão de horários: só o ícone; apagado quando os horários estão ocultos */
+#kvcs-panel .kvcs-bar .kvcs-icon-btn { width: 22px; padding: 0; color: #fff; }
+#kvcs-panel .kvcs-bar .kvcs-icon-btn[aria-pressed="false"] { background: transparent; color: var(--kvcs-muted); }
+.kvcs-icon-btn svg { display: block; width: 14px; height: 14px; margin: 4px; }
+#kvcs-panel .kvcs-bar .kvcs-icon-btn[aria-pressed="false"]:hover { background: var(--kvcs-hover); color: #fff; }
+#kvcs-panel.kvcs-hide-time .kvcs-time { display: none; }
 #kvcs-panel .kvcs-bar button:hover { background: var(--kvcs-control); }
 #kvcs-panel .kvcs-bar button:active { background: var(--kvcs-name-hover); transform: scale(0.97); }
 #kvcs-panel .kvcs-bar button:focus-visible,
