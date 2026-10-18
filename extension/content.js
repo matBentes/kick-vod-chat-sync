@@ -172,11 +172,14 @@
   const REPLY_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.5 3 1.5 7.5l5 4.5V9h3.25A3.25 3.25 0 0 1 13 12.25V14h1.5v-1.75A4.75 4.75 0 0 0 9.75 7.5H6.5V3Z"/></svg>';
 
-  // "02:07:15" — tempo desde o início da live, como o replay nativo mostra
+  // Tempo desde o início da live, no mesmo formato do replay nativo:
+  // "02:12" antes de 1h, "02:07:15" a partir de 1h.
   const fmtVodTime = (ms) => {
     const s = Math.max(0, Math.floor(ms / 1000));
     const p = (n) => String(n).padStart(2, '0');
-    return `${p(Math.floor(s / 3600))}:${p(Math.floor(s / 60) % 60)}:${p(s % 60)}`;
+    const h = Math.floor(s / 3600);
+    const mmss = `${p(Math.floor(s / 60) % 60)}:${p(s % 60)}`;
+    return h ? `${p(h)}:${mmss}` : mmss;
   };
 
   function renderRow(m, startMs) {
