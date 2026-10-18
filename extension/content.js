@@ -429,10 +429,15 @@
       c.list.addEventListener(ev, markUser, { passive: true });
     }
     // roda pra cima solta na hora: o próximo tick não pode puxar a lista de volta
-    c.list.addEventListener('wheel', (e) => { markUser(); if (e.deltaY < 0) c.stick = false; }, { passive: true });
+    // (e não deixa colar de volta por 300ms: um "scroll" atrasado do próprio painel, ainda no
+    // fim, chegaria antes da animação da roda começar e desfaria a rolagem)
+    c.list.addEventListener('wheel', (e) => {
+      markUser();
+      if (e.deltaY < 0) { c.stick = false; c.noStickUntil = performance.now() + 300; }
+    }, { passive: true });
     c.list.addEventListener('scroll', () => {
       const top = c.list.scrollTop;
-      if (isAtBottom(c)) { c.stick = true; c.more.hidden = true; }
+      if (isAtBottom(c)) { if (canStick(c)) { c.stick = true; c.more.hidden = true; } }
       else if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = false;
       else if (c.stick) c.list.scrollTop = c.list.scrollHeight; // scroll que ninguém pediu: volta ao fim
       c.lastTop = c.list.scrollTop;
@@ -482,6 +487,7 @@
     if (s && s.textContent !== (text || '')) s.textContent = text || '';
   }
 
+  const canStick = (c) => performance.now() >= (c.noStickUntil ?? 0);
   const isAtBottom = (c) => c.list.scrollHeight - c.list.scrollTop - c.list.clientHeight < 60;
 
   function scrollToBottom(c) {
@@ -507,6 +513,7 @@
     if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) return;
     if (c.stick) { if (!isAtBottom(c)) c.list.scrollTop = c.list.scrollHeight; }
     else if (c.list.scrollTop === 0 && c.lastTop > 100) c.list.scrollTop = c.lastTop;
+    else if (isAtBottom(c) && canStick(c)) scrollToBottom(c); // voltou ao fim sem gerar evento
   }
 
   function afterInsert(c) {
