@@ -435,7 +435,6 @@
       if (isAtBottom(c)) { c.stick = true; c.more.hidden = true; }
       else if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = false;
       else if (c.stick) c.list.scrollTop = c.list.scrollHeight; // scroll que ninguém pediu: volta ao fim
-      else if (top === 0 && c.lastTop > 100) c.list.scrollTop = c.lastTop; // re-render zerou quem estava lendo
       c.lastTop = c.list.scrollTop;
     }, { passive: true });
     setShowTime(c, loadShowTime());
@@ -500,6 +499,14 @@
   // e quem cola de volta é o handler de "scroll" ao chegar no fim.
   function refreshStick(c) {
     if (c.stick && performance.now() - (c.userScrollAt ?? -Infinity) < 1000 && !isAtBottom(c)) c.stick = false;
+  }
+
+  // Quando a Kick move um ancestral do chat, o navegador zera o scrollTop sem disparar
+  // "scroll". Conferido a cada tick: colado volta ao fim; lendo acima volta onde estava.
+  function guardScroll(c) {
+    if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) return;
+    if (c.stick) { if (!isAtBottom(c)) c.list.scrollTop = c.list.scrollHeight; }
+    else if (c.list.scrollTop === 0 && c.lastTop > 100) c.list.scrollTop = c.lastTop;
   }
 
   function afterInsert(c) {
@@ -578,6 +585,7 @@
     c.seeking = false;
     if (jumped) resetTo(c, abs);
 
+    guardScroll(c);
     prune(c, abs);
     pumpFetches(c, abs);
 
