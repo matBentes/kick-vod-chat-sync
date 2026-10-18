@@ -3,6 +3,21 @@
 All notable changes to this extension are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-10-18
+
+### Fixed
+- Chat gaps: a 5-second window that failed to load (rate limit, server or network error) was skipped for good, with no warning. It is now retried, network errors are retried too, and the error under the chat goes away once the missing messages arrive.
+- After skipping to another point, the chat could stay blank for up to 15 seconds while requests for the old position finished. Those are now cancelled, and the window at the playhead loads first.
+- When Kick re-rendered its chat, the panel lost its scroll position: it stopped following new messages, and the message limit on screen stopped applying, so a long session could slow the tab down. The panel now keeps its place (at the bottom, or where you were reading) and always limits the messages on screen.
+- Memory no longer grows with the length of the VOD: only messages within 5 minutes of the playhead are kept.
+- If the VOD couldn't be loaded, the error panel covered Kick's chat and left it unusable. Kick's chat now comes back, with the reason in the bar.
+- VODs older than the channel's ~30 most recent ones failed with "VOD is not in the channel's list". Their start time now comes from the VOD id itself.
+- Scrolling up to read was sometimes undone by new messages arriving.
+- "Replying to" is now translated to Portuguese.
+
+### Security
+- Username colors are only accepted as `#hex`, and badge images only over `https`, so data from the API can't inject CSS or odd URLs into the panel.
+
 ## [0.6.0] - 2026-10-18
 
 ### Added
@@ -35,5 +50,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - First public version.
 
+[0.6.1]: https://github.com/matBentes/kick-vod-chat-sync/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/matBentes/kick-vod-chat-sync/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/matBentes/kick-vod-chat-sync/releases/tag/v0.5.1

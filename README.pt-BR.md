@@ -5,6 +5,8 @@ Extensão para Chrome que deixa o **chat das VODs da Kick no mesmo ritmo do víd
 <sub>🇺🇸 [English](README.md)</sub>
 
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+[![usuários](https://img.shields.io/chrome-web-store/users/deeikanpfgojedfhhooelogofoeafkhg?label=usuários)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+[![nota](https://img.shields.io/chrome-web-store/rating/deeikanpfgojedfhhooelogofoeafkhg?label=nota)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg/reviews)
 
 <p align="center">
   <img src="docs/chat-pt.png" width="340" alt="Painel do chat sincronizado no lugar do chat da Kick, com a barra 'Sincronizado 1.5x' em destaque">
@@ -24,8 +26,6 @@ O painel ocupa o lugar da lista de mensagens da Kick e segue o visual do chat na
 
 
 ## Instalação
-
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
 
 Instale pela **[Chrome Web Store](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)**, abra qualquer VOD (`kick.com/<canal>/videos/<id>`) e ajuste a velocidade no player.
 
@@ -68,9 +68,19 @@ O resto da marcação do painel pode mudar entre versões.
 
 ## Limitações
 
-- Usa rotas internas da Kick (`web.kick.com/api/v1/...`), que não são documentadas. Se a Kick mudar, pode parar de funcionar; nesse caso o painel mostra o erro.
+- Só VODs (`kick.com/<canal>/videos/<id>`). Lives e clips continuam com o chat da própria Kick.
+- Usa rotas internas da Kick (`web.kick.com/api/v1/...`), que não são documentadas. Se a Kick mudar, pode parar de funcionar; nesse caso a extensão devolve o chat da Kick e mostra o motivo na barra.
 - Os ícones de moderador, VIP, founder, OG e sub gifter são desenhos próprios nas cores da Kick. Badges de nível, de assinante e globais usam as imagens oficiais que a API já envia.
 - Não é um projeto oficial nem afiliado à Kick.
+
+## Problemas comuns
+
+| O que aparece | O que fazer |
+| --- | --- |
+| Ponto vermelho e **falhou: …** na barra | A extensão não conseguiu carregar esta VOD e o chat da Kick voltou. Recarregue a página; se continuar, [abra uma issue](https://github.com/matBentes/kick-vod-chat-sync/issues) com o link da VOD. |
+| **erro: …** embaixo do chat | A API da Kick está recusando ou limitando algumas requisições. A extensão continua tentando, e o aviso some sozinho quando as mensagens que faltavam chegam. |
+| O chat parou | Confira se o vídeo está tocando (a barra mostra **pausado**). Se estiver, recarregue a página e abra uma issue com o link da VOD e o minuto. |
+| Dois chats ou o chat piscando | Outra extensão também está mexendo no chat da Kick. Teste com ela desativada. |
 
 ## Estrutura
 

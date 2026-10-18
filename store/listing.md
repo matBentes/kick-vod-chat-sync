@@ -15,7 +15,7 @@ Entertainment
 ## English (default)
 
 ### Summary
-Keeps Kick VOD chat replay in sync with the video at any speed (1.25x, 1.5x, 2x), with pause and seek.
+Fix Kick VOD chat lag at 1.5x/2x: chat replay synced to the video at any speed, with pause and seek.
 
 ### Description
 
@@ -28,6 +28,7 @@ This extension replaces the message list with a chat that follows the video's cl
 • Catches up when you skip to another point in the VOD
 • Same look as Kick's chat: VOD timestamp, badges, emotes, replies, links and your chat font size
 • "Original chat" button to see Kick's replay as it is, and "Back to synced" to return
+• Show or hide timestamps with the clock button
 
 Nothing to configure: open a VOD and change the speed in the player. The panel is in English or Portuguese, following your browser's language.
 
@@ -42,7 +43,7 @@ Independent project, not affiliated with Kick.
 ## Português (Brasil)
 
 ### Resumo
-Chat das VODs da Kick sincronizado com o vídeo em qualquer velocidade (1.25x, 1.5x, 2x), com pause e seek.
+Chat da VOD da Kick atrasado em 1.5x/2x? Aqui ele acompanha o vídeo em qualquer velocidade, com pause e seek.
 
 ### Descrição
 
@@ -55,6 +56,7 @@ Esta extensão coloca no lugar da lista de mensagens um chat que segue o tempo d
 • Acompanha quando você pula para outro ponto da VOD
 • Visual igual ao chat da Kick: horário da VOD, badges, emotes, respostas, links e o tamanho de fonte que você configurou
 • Botão "Chat original" para ver o replay da Kick como ele é, e "Voltar ao sincronizado" para retornar
+• Mostrar ou ocultar os horários pelo botão do relógio
 
 Não tem nada para configurar: abra uma VOD e ajuste a velocidade no player. O painel aparece em português ou inglês, conforme o idioma do navegador.
 

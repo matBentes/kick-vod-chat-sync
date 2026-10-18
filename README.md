@@ -5,6 +5,8 @@ Chrome extension that keeps **Kick's VOD chat replay in sync with the video** at
 <sub>🇧🇷 [Português](README.pt-BR.md)</sub>
 
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+[![users](https://img.shields.io/chrome-web-store/users/deeikanpfgojedfhhooelogofoeafkhg?label=users)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
+[![rating](https://img.shields.io/chrome-web-store/rating/deeikanpfgojedfhhooelogofoeafkhg?label=rating)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg/reviews)
 
 <p align="center">
   <img src="docs/chat.png" width="340" alt="Synced chat panel in place of Kick's chat, with the 'Synced 1.5x' bar highlighted">
@@ -23,8 +25,6 @@ Kick's VOD chat replay shows messages at wall-clock pace. If you watch at **1.5x
 The panel takes the place of Kick's message list and follows the native chat's look: VOD timestamp, badges (level, subscriber, moderator, VIP, founder…), emotes, replies, links and the font size you set in the chat.
 
 ## Install
-
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/deeikanpfgojedfhhooelogofoeafkhg?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)
 
 Install it from the **[Chrome Web Store](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)**, open any VOD (`kick.com/<channel>/videos/<id>`) and change the speed in the player.
 
@@ -67,9 +67,19 @@ Anything else in the panel's markup may change between versions.
 
 ## Limitations
 
-- Uses Kick's internal endpoints (`web.kick.com/api/v1/...`), which aren't documented. If Kick changes them it may stop working; the panel then shows the error.
+- VODs only (`kick.com/<channel>/videos/<id>`). Live streams and clips use Kick's own chat as usual.
+- Uses Kick's internal endpoints (`web.kick.com/api/v1/...`), which aren't documented. If Kick changes them it may stop working; the extension then gives you back Kick's chat and shows the reason in the bar.
 - The moderator, VIP, founder, OG and sub gifter icons are original drawings in Kick's colors. Level, subscriber and global badges use the official images the API already sends.
 - Not an official project and not affiliated with Kick.
+
+## Troubleshooting
+
+| What you see | What to do |
+| --- | --- |
+| Red dot and **failed: …** in the bar | The extension couldn't load this VOD and Kick's chat is back. Reload the page; if it keeps happening, [open an issue](https://github.com/matBentes/kick-vod-chat-sync/issues) with the VOD link. |
+| **error: …** under the chat | Kick's API is refusing or rate limiting some requests. The extension keeps retrying and the message goes away on its own once the missing messages arrive. |
+| Chat stopped moving | Check that the video is playing (the bar shows **paused**). If it is, reload the page and open an issue with the VOD link and the minute. |
+| Two chats or a flickering chat | Another extension is also changing Kick's chat. Try with it disabled. |
 
 ## Privacy
 
