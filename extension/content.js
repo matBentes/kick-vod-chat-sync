@@ -397,6 +397,9 @@
       c.native = native;
       c.panel.classList.toggle('kvcs-native-mode', c.showNative);
     } else if (c.panel.parentElement !== document.body) {
+      // Sem o chat da Kick não há "chat original" para mostrar: volta ao sincronizado
+      // (senão a barra diria "Chat original" com a lista sincronizada embaixo).
+      if (c.showNative && !c.dead) { c.showNative = false; setNativeLabels(c); }
       document.body.appendChild(c.panel);
       c.panel.classList.add('kvcs-floating');
       c.panel.classList.remove('kvcs-native-mode');
@@ -469,12 +472,17 @@
 
   // Alterna entre o chat sincronizado e o replay original da Kick.
   // No modo original o painel encolhe para só a barra, que continua com o botão de voltar.
-  function setNativeMode(c, on) {
-    c.showNative = on;
+  function setNativeLabels(c) {
+    const on = c.showNative;
     c.panel.querySelector('.kvcs-title').textContent = on ? T.nativeTitle : T.synced;
     const btn = c.panel.querySelector('.kvcs-switch');
     btn.textContent = on ? T.toSynced : T.toNative;
     btn.title = on ? T.toSyncedTip : T.toNativeTip;
+  }
+
+  function setNativeMode(c, on) {
+    c.showNative = on;
+    setNativeLabels(c);
     mountPanel(c);
     if (!on) scrollToBottom(c);
   }

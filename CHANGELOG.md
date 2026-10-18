@@ -3,6 +3,11 @@
 All notable changes to this extension are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.2] - 2026-10-18
+
+### Fixed
+- With "Original chat" on, if Kick's chat column was collapsed, the floating panel kept the "Original chat" title while showing the synced chat. It now switches back to synced.
+
 ## [0.6.1] - 2026-10-18
 
 ### Fixed
@@ -50,6 +55,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - First public version.
 
+[0.6.2]: https://github.com/matBentes/kick-vod-chat-sync/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/matBentes/kick-vod-chat-sync/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/matBentes/kick-vod-chat-sync/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/matBentes/kick-vod-chat-sync/releases/tag/v0.5.1
