@@ -1,13 +1,13 @@
 ---
 title: I built a Chrome extension because Kick's VOD chat can't keep up with 1.5x
 published: true
-tags: javascript, chrome, webdev, opensource
-cover_image: https://raw.githubusercontent.com/matBentes/kick-vod-chat-sync/main/store/en/screenshot-1.png
+tags: showdev, javascript, chrome, opensource
+cover_image: https://raw.githubusercontent.com/matBentes/kick-vod-chat-sync/main/store/devto-cover.png
 ---
 
 I watch most streams as VODs, and I watch them at 1.5x. On Kick that has one annoying side effect: the chat replay falls behind. Someone scores, the streamer screams, and the "GOOOL" wave in chat shows up 20 seconds later.
 
-So I built **[VOD Chat Sync for Kick](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg)**, a small Chrome extension that keeps the chat replay in sync with the video at any speed. It's free and open source (MIT).
+So I built **[VOD Chat Sync for Kick](https://chromewebstore.google.com/detail/vod-chat-sync-for-kick/deeikanpfgojedfhhooelogofoeafkhg?utm_source=devto&utm_medium=article)**, a small Chrome extension that keeps the chat replay in sync with the video at any speed. It's free and open source (MIT).
 
 ![Synced chat panel](https://raw.githubusercontent.com/matBentes/kick-vod-chat-sync/main/docs/chat.png)
 

@@ -1,6 +1,13 @@
 # Chrome Web Store listing
 
-Text used in the developer dashboard. Images: `en/` (default) and `pt/` (Portuguese localization).
+Text used in the developer dashboard. Images: `en/` (default) and `pt/` (Portuguese localization), uploaded in this order:
+
+1. `screenshot-1.png`: the synced panel (hero)
+2. `screenshot-2.png`: why the chat lags
+3. `screenshot-3.png`: "Original chat" / "Back to synced"
+4. `screenshot-4.png`: hide or show timestamps
+
+The summary shown in the store comes from the manifest description (`extension/_locales/*/messages.json`), not from this file.
 
 Default language: **English**. Add **Português (Brasil)** as a second listing language with the PT text below.
 
