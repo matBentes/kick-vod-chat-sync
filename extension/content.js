@@ -12,6 +12,10 @@
   const SEEK_JUMP_MS = 20_000;   // pulo maior que isso pra frente = seek
   const MAX_DOM_MSGS = 250;
   const MAX_INFLIGHT = 2;
+  const KEEP_MS = 5 * 60_000;     // memória: guarda só mensagens/janelas a ±5 min do playhead
+  const PRUNE_AT = 2_000;         // só poda quando passar de tantas mensagens guardadas
+  const FAILED_RETRY_MS = 10_000; // espera antes de tentar de novo uma janela que falhou
+  const VIDEO_WAIT_MS = 30_000;   // sem player depois disso: desiste e devolve o chat original
   const WEB_API = 'https://web.kick.com/api/v1';
 
   // Textos do painel: português se o navegador estiver em PT, inglês no resto.
@@ -25,6 +29,7 @@
       noChannelId: (slug) => `channel "${slug}" has no id in the API`,
       vodNotListed: (n) => `VOD is not in the channel's list (${n} videos)`,
       noStart: 'VOD has no start_time',
+      noVideo: 'video player not found', replyingTo: 'Replying to',
       hideTime: 'Hide timestamps', showTime: 'Show timestamps',
     },
     pt: {
@@ -36,6 +41,7 @@
       noChannelId: (slug) => `canal "${slug}" sem id na API`,
       vodNotListed: (n) => `VOD não está na lista do canal (${n} vídeos)`,
       noStart: 'VOD sem start_time',
+      noVideo: 'player de vídeo não encontrado', replyingTo: 'Respondendo a',
       hideTime: 'Ocultar horários', showTime: 'Mostrar horários',
     },
   };
@@ -58,22 +64,45 @@
   };
 
   // ---------- utils ----------
+  // A API manda "2026-09-26 08:00:00" ou ISO; sem fuso explícito é UTC (não hora local).
   const parseKickDate = (s) => {
-    if (!s) return NaN;
-    return Date.parse(s.includes('T') ? s : s.replace(' ', 'T') + 'Z');
+    if (typeof s !== 'string' || !s) return NaN;
+    const iso = s.includes('T') ? s : s.replace(' ', 'T');
+    return Date.parse(/(Z|[+-]\d\d:?\d\d)$/i.test(iso) ? iso : iso + 'Z');
   };
 
-  const getJSON = async (url) => {
-    const r = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
+  const getJSON = async (url, signal) => {
+    const r = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' }, signal });
     if (!r.ok) {
       const err = new Error(`HTTP ${r.status} ${T.httpAt} ${url.replace(/\?.*/, '')}`);
       err.status = r.status;
+      const ra = Number(r.headers.get('Retry-After'));
+      if (Number.isFinite(ra) && ra > 0) err.retryAfterMs = Math.min(ra * 1000, 30_000);
       throw err;
     }
     return r.json();
   };
 
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  // sleep que pode ser cancelado (seek/teardown não ficam esperando um backoff à toa)
+  const sleep = (ms, signal) => new Promise((resolve, reject) => {
+    if (signal?.aborted) { reject(signal.reason); return; }
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => { clearTimeout(t); reject(signal.reason); }, { once: true });
+  });
+
+  // 429, 5xx e falha de rede/JSON inválido (sem status) valem nova tentativa; 4xx não.
+  const isRetriable = (e) => e?.name !== 'AbortError' && (e?.status === undefined || e.status === 429 || e.status >= 500);
+
+  async function getJSONRetry(url, signal, tries = 4) {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await getJSON(url, signal);
+      } catch (e) {
+        if (attempt >= tries - 1 || !isRetriable(e)) throw e;
+        await sleep(e.retryAfterMs || 1000 * 2 ** attempt + Math.random() * 300, signal);
+      }
+    }
+  }
 
   // primeiro índice com t > x
   const upperIdx = (arr, x) => {
@@ -105,7 +134,7 @@
   };
 
   const renderContent = (text) => {
-    text = text || '';
+    text = typeof text === 'string' ? text : '';
     let out = '', last = 0;
     for (const mt of text.matchAll(EMOTE_RE)) {
       out += linkify(text.slice(last, mt.index));
@@ -117,7 +146,7 @@
   };
 
   // Na linha "Replying to" o nativo mostra o nome do emote como texto.
-  const plainContent = (text) => (text || '').replace(EMOTE_RE, '$2');
+  const plainContent = (text) => (typeof text === 'string' ? text : '').replace(EMOTE_RE, '$2');
 
   // type "reply": metadata é uma string JSON com original_message / original_sender
   const parseReply = (m) => {
@@ -138,13 +167,19 @@
   //  - badges_v2   = globais: level, GOAT, Flyby… (com imagem) — só os que o usuário selecionou
   //  - tudo junto, ordenado por sort_order crescente
   const ICONS = globalThis.KVCS_BADGE_ICONS || {};
+  const iconFor = (type) => (Object.hasOwn(ICONS, type) ? ICONS[type] : null);
+
+  // Só https em <img src>; a cor entra num style="", então só aceita #hex (senão daria
+  // para injetar outras declarações CSS pelo campo de cor do usuário).
+  const safeSrc = (src) => (typeof src === 'string' && /^https:\/\//i.test(src) ? src : null);
+  const safeColor = (c) => (typeof c === 'string' && /^#[0-9a-f]{3,8}$/i.test(c) ? c : '#53fc18');
 
   const pickSubBadge = (subBadges, months) => {
     let best = null;
     for (const b of subBadges || []) {
       if (b.months <= months && (!best || b.months > best.months)) best = b;
     }
-    return best?.badge_image?.src || null;
+    return safeSrc(best?.badge_image?.src);
   };
 
   function buildBadges(identity, meta) {
@@ -156,16 +191,17 @@
         const title = `${months}-Month Subscriber`;
         const src = pickSubBadge(meta?.subBadges, months);
         if (src) list.push({ sort: b.sort_order ?? 9, title, src });
-        else if (ICONS.subscriber) list.push({ sort: b.sort_order ?? 9, title, svg: ICONS.subscriber.svg });
+        else if (iconFor('subscriber')) list.push({ sort: b.sort_order ?? 9, title, svg: ICONS.subscriber.svg });
         continue;
       }
-      const icon = ICONS[b.type];
+      const icon = iconFor(b.type);
       if (icon) list.push({ sort: b.sort_order ?? 50, title: b.text || icon.title, svg: icon.svg });
     }
     for (const b of identity?.badges_v2 ?? []) {
-      if (!b?.selected || !b.image_url) continue;
-      const title = b.name === 'level' && b.metadata?.level ? `Level ${b.metadata.level}` : b.name;
-      list.push({ sort: b.sort_order ?? 50, title, src: b.image_url });
+      const src = b?.selected ? safeSrc(b.image_url) : null;
+      if (!src) continue;
+      const title = b.name === 'level' && b.metadata?.level ? `Level ${b.metadata.level}` : String(b.name ?? '');
+      list.push({ sort: b.sort_order ?? 50, title, src });
     }
     return list.sort((a, b) => a.sort - b.sort);
   }
@@ -175,7 +211,7 @@
     id: m.id,
     t: parseKickDate(m.created_at),
     user: m.sender?.username ?? '???',
-    color: m.sender?.identity?.color || '#53fc18',
+    color: safeColor(m.sender?.identity?.color),
     badges: buildBadges(m.sender?.identity, meta),
     reply: parseReply(m),
     html: renderContent(m.content),
@@ -212,7 +248,7 @@
       `<span class="kvcs-content">${m.html}</span>`;
     row.innerHTML = m.reply
       ? `<div class="kvcs-entry kvcs-has-reply">` +
-          `<div class="kvcs-reply">${REPLY_ICON}<span>Replying to ${esc(m.reply.user)}: ${esc(m.reply.text)}</span></div>` +
+          `<div class="kvcs-reply">${REPLY_ICON}<span>${T.replyingTo} ${esc(m.reply.user)}: ${esc(m.reply.text)}</span></div>` +
           `<div class="kvcs-line">${line}</div></div>`
       : `<div class="kvcs-entry">${line}</div>`;
     return row;
@@ -223,12 +259,12 @@
   //   kick.com/api/v2/channels/{slug}                      -> id do canal
   //   web.kick.com/api/v1/channels/{id}/videos             -> VODs (id = uuid da URL, start_time ISO)
   //   web.kick.com/api/v1/chat/{id}/history?start_time=ISO -> mensagens de [t, t+5s)
-  async function loadVodMeta(uuid, slug) {
-    const ch = await getJSON(`/api/v2/channels/${slug}`);
+  async function loadVodMeta(uuid, slug, signal) {
+    const ch = await getJSONRetry(`/api/v2/channels/${slug}`, signal);
     const channelId = ch?.id;
     if (!channelId) throw new Error(T.noChannelId(slug));
 
-    const list = await getJSON(`${WEB_API}/channels/${channelId}/videos`);
+    const list = await getJSONRetry(`${WEB_API}/channels/${channelId}/videos`, signal);
     const items = list?.data ?? [];
     const vod = items.find((v) => v?.id === uuid);
     if (!vod) throw new Error(T.vodNotListed(items.length));
@@ -242,25 +278,25 @@
   // A API aceita "2026-09-26T08:00:00Z" (sem milissegundos).
   const toApiIso = (ms) => new Date(Math.floor(ms / 1000) * 1000).toISOString().replace('.000Z', 'Z');
 
-  async function fetchWindow(channelId, atMs) {
+  // Lança erro se todas as tentativas falharem: quem chama marca a janela para tentar de novo.
+  async function fetchWindow(channelId, atMs, signal) {
     const url = `${WEB_API}/chat/${channelId}/history?start_time=${encodeURIComponent(toApiIso(atMs))}`;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        const j = await getJSON(url);
-        return j?.data?.messages ?? [];
-      } catch (e) {
-        if (e.status === 429 || e.status >= 500) { await sleep(1000 * 2 ** attempt); continue; }
-        throw e;
-      }
-    }
-    return [];
+    const j = await getJSONRetry(url, signal);
+    return Array.isArray(j?.data?.messages) ? j.data.messages : [];
   }
 
   // ---------- estado de mensagens ----------
+  // Janelas de 5s identificadas pelo início (múltiplo de FETCH_STEP_MS):
+  //   c.done    já baixadas (as mensagens estão em c.msgs)
+  //   c.pending em andamento (do AbortController atual)
+  //   c.failed  falharam -> horário a partir do qual tentar de novo
+  const floorStep = (ms) => Math.floor(ms / FETCH_STEP_MS) * FETCH_STEP_MS;
+
   function ingest(c, raw) {
     for (const r of raw) {
       if (!r?.id || c.seen.has(r.id)) continue;
-      const m = normalize(r, c.meta);
+      let m;
+      try { m = normalize(r, c.meta); } catch { continue; } // uma mensagem estranha não derruba o lote
       if (!Number.isFinite(m.t)) continue;
       c.seen.add(r.id);
       c.msgs.splice(upperIdx(c.msgs, m.t), 0, m);
@@ -269,18 +305,64 @@
     }
   }
 
-  function pumpFetches(c, absMs) {
-    const target = absMs + LOOKAHEAD_MS;
-    while (c.inflight < MAX_INFLIGHT && c.fetchCursor < target) {
-      const at = c.fetchCursor;
-      c.fetchCursor += FETCH_STEP_MS;
-      c.inflight++;
-      const gen = c.gen;
-      fetchWindow(c.meta.channelId, at)
-        .then((msgs) => { c.error = ''; if (ctx === c && gen === c.gen) ingest(c, msgs); })
-        .catch((e) => { c.error = T.error + e.message; })
-        .finally(() => { c.inflight--; });
+  // Ordem: a janela do playhead primeiro, depois o que vem à frente, depois o backlog.
+  function* windowsAround(abs) {
+    const cur = floorStep(abs);
+    for (let at = cur; at < abs + LOOKAHEAD_MS; at += FETCH_STEP_MS) yield at;
+    for (let at = cur - FETCH_STEP_MS; at >= floorStep(abs - BACKLOG_MS); at -= FETCH_STEP_MS) yield at;
+  }
+
+  function pumpFetches(c, abs) {
+    const now = Date.now();
+    for (const at of windowsAround(abs)) {
+      if (c.pending.size >= MAX_INFLIGHT) return;
+      if (c.done.has(at) || c.pending.has(at)) continue;
+      if ((c.failed.get(at) ?? 0) > now) continue;
+      startFetch(c, at);
     }
+  }
+
+  function startFetch(c, at) {
+    const signal = c.abort.signal;
+    c.pending.add(at);
+    fetchWindow(c.meta.channelId, at, signal)
+      .then((msgs) => {
+        if (ctx !== c) return;
+        c.done.add(at);
+        c.failed.delete(at);
+        ingest(c, msgs);
+      })
+      .catch((e) => {
+        if (ctx !== c || e?.name === 'AbortError') return;
+        c.failed.set(at, Date.now() + FAILED_RETRY_MS);
+        c.lastError = e?.message || String(e);
+      })
+      .finally(() => {
+        if (signal === c.abort.signal) c.pending.delete(at); // seek limpou o pending: não mexe no novo
+      });
+  }
+
+  // Memória constante em VODs longas: descarta o que está a mais de KEEP_MS do playhead.
+  // Corta em fronteira de janela, para c.done nunca dizer "baixada" de uma janela pela metade.
+  function prune(c, abs) {
+    const lo = floorStep(abs - KEEP_MS);
+    const hi = floorStep(abs + KEEP_MS);
+    if (c.msgs.length > PRUNE_AT && (c.msgs[0].t < lo || c.msgs[c.msgs.length - 1].t >= hi)) {
+      const a = upperIdx(c.msgs, lo - 1);
+      const b = upperIdx(c.msgs, hi - 1);
+      for (const m of c.msgs.slice(0, a)) c.seen.delete(m.id);
+      for (const m of c.msgs.slice(b)) c.seen.delete(m.id);
+      c.msgs = c.msgs.slice(a, b);
+      for (const at of c.done) if (at < lo || at >= hi) c.done.delete(at);
+    }
+    for (const at of c.failed.keys()) if (at < lo || at >= hi) c.failed.delete(at);
+  }
+
+  // há janela com falha perto do playhead? (o erro some sozinho quando ela é recuperada)
+  function nearbyError(c, abs) {
+    const lo = floorStep(abs - BACKLOG_MS), hi = abs + LOOKAHEAD_MS;
+    for (const at of c.failed.keys()) if (at >= lo && at < hi) return T.error + c.lastError;
+    return '';
   }
 
   // ---------- UI ----------
@@ -292,15 +374,22 @@
   function mountPanel(c) {
     const native = document.getElementById('chatroom-messages');
     if (native && native.parentElement) {
-      if (c.panel.previousElementSibling !== native) native.after(c.panel);
+      // Só move quando o contêiner mudou (React recriou o chat). Mover zera o scrollTop,
+      // então devolve a lista ao fim se ela estava no fim.
+      if (c.panel.parentElement !== native.parentElement) {
+        native.after(c.panel);
+        if (c.stick) scrollToBottom(c);
+      }
       c.panel.classList.remove('kvcs-floating');
       if (native.inert !== !c.showNative) native.inert = !c.showNative; // fora do foco/leitor de tela enquanto coberta
+      if (c.native && c.native !== native) c.native.inert = false;
       c.native = native;
       c.panel.classList.toggle('kvcs-native-mode', c.showNative);
     } else if (c.panel.parentElement !== document.body) {
       document.body.appendChild(c.panel);
       c.panel.classList.add('kvcs-floating');
       c.panel.classList.remove('kvcs-native-mode');
+      if (c.stick) scrollToBottom(c);
     }
   }
 
@@ -329,21 +418,25 @@
     c.panel = el;
     c.list = el.querySelector('.kvcs-list');
     c.more = el.querySelector('.kvcs-more');
-    c.list.addEventListener('scroll', () => { if (isAtBottom(c)) c.more.hidden = true; }, { passive: true });
+    c.rateEl = el.querySelector('.kvcs-rate');
+    // "colado no fim" é decidido pelo usuário (scroll), não medido a cada linha inserida
+    c.list.addEventListener('scroll', () => {
+      c.stick = isAtBottom(c);
+      if (c.stick) c.more.hidden = true;
+    }, { passive: true });
     setShowTime(c, loadShowTime());
     setNativeMode(c, false);
   }
 
   // Os horários continuam no DOM; só a classe do painel decide se aparecem.
   function setShowTime(c, on) {
-    const stick = isAtBottom(c); // medir antes: as linhas quebram diferente e mudam de altura
     c.showTime = on;
     c.panel.classList.toggle('kvcs-hide-time', !on);
     const btn = c.panel.querySelector('[data-act="time"]');
     btn.setAttribute('aria-pressed', String(on));
     btn.title = on ? T.hideTime : T.showTime;
     btn.setAttribute('aria-label', btn.title);
-    if (stick) scrollToBottom(c);
+    if (c.stick) scrollToBottom(c); // as linhas quebram diferente e mudam de altura
   }
 
   // Alterna entre o chat sincronizado e o replay original da Kick.
@@ -358,6 +451,19 @@
     if (!on) scrollToBottom(c);
   }
 
+  // Não deu para iniciar: devolve o chat original e mostra o motivo na barra,
+  // em vez de deixar o painel tapando (e travando) o chat da Kick.
+  function fail(c, msg) {
+    c.dead = true;
+    setNativeMode(c, true);
+    c.panel.classList.add('kvcs-dead');
+    const title = c.panel.querySelector('.kvcs-title');
+    title.textContent = T.failed + msg;
+    title.title = title.textContent;
+    clearInterval(c.timer);
+    c.timer = setInterval(() => { if (ctx === c) mountPanel(c); }, 1000); // o React pode recriar o chat
+  }
+
   function setStatus(c, text) {
     const s = c.panel?.querySelector('.kvcs-status');
     if (s && s.textContent !== (text || '')) s.textContent = text || '';
@@ -367,34 +473,40 @@
 
   function scrollToBottom(c) {
     c.list.scrollTop = c.list.scrollHeight;
+    c.stick = true;
     c.more.hidden = true;
   }
 
-  // insere mantendo a ordem por tempo (quase sempre é só um append no fim)
+  // Depois de inserir: limita o DOM SEMPRE (com teto maior se o usuário está lendo mais acima,
+  // para não sumir o que ele está lendo) e rola só se estava colado no fim.
+  // Ao remover linhas acima, o scroll anchoring do Chrome mantém a posição de leitura.
+  function afterInsert(c) {
+    const cap = c.stick ? MAX_DOM_MSGS : MAX_DOM_MSGS * 4;
+    while (c.list.childElementCount > cap) c.list.firstElementChild.remove();
+    if (c.stick) c.list.scrollTop = c.list.scrollHeight;
+    else c.more.hidden = false; // usuário está lendo mais acima: não rola, só avisa
+  }
+
+  // insere mantendo a ordem por tempo (mensagens que chegam atrasadas do backlog)
   function insertRow(c, m) {
-    const stick = isAtBottom(c);
     const row = renderRow(m, c.meta.startMs);
     let ref = c.list.lastElementChild;
     while (ref && Number(ref.dataset.t) > m.t) ref = ref.previousElementSibling;
     if (ref) ref.after(row); else c.list.prepend(row);
-
-    if (stick) {
-      while (c.list.childElementCount > MAX_DOM_MSGS) c.list.firstElementChild.remove();
-      c.list.scrollTop = c.list.scrollHeight;
-    } else {
-      c.more.hidden = false; // usuário está lendo mais acima: não rola, só avisa
-    }
+    afterInsert(c);
   }
 
   // ---------- sincronização ----------
   const currentAbs = (c) => c.meta.startMs + c.video.currentTime * 1000;
 
   function resetTo(c, absMs) {
-    c.gen++;
+    c.abort?.abort();                   // cancela fetches/backoffs da posição antiga
+    c.abort = new AbortController();
+    c.pending.clear();
     c.list.textContent = '';
     c.more.hidden = true;
+    c.stick = true;
     c.renderedUntil = absMs - BACKLOG_MS;
-    c.fetchCursor = Math.floor((absMs - BACKLOG_MS) / FETCH_STEP_MS) * FETCH_STEP_MS;
   }
 
   // O player da VOD não é necessariamente o primeiro <video> da página: a Kick tem
@@ -416,7 +528,7 @@
 
   // Além do timer, os eventos do próprio vídeo disparam o tick: o Chrome pode segurar
   // timers de abas sem foco/mudas por até 1 min, mas eventos de mídia continuam chegando.
-  const VIDEO_EVENTS = ['timeupdate', 'seeked', 'ratechange', 'play', 'pause'];
+  const VIDEO_EVENTS = ['timeupdate', 'seeking', 'seeked', 'ratechange', 'play', 'pause'];
 
   function bindVideo(c, v) {
     if (c.boundVideo === v) return;
@@ -426,47 +538,61 @@
   }
 
   function tick(c) {
-    if (ctx !== c) return;
-    // o player pode recriar o <video>, e outros vídeos podem aparecer/sumir na página
-    const v = pickVideo();
-    if (v && v !== c.video) bindVideo(c, v);
+    if (ctx !== c || c.dead) return;
+    mountPanel(c); // o React da Kick pode recriar a área do chat (mesmo com o player sumido)
+    // Mantém o vídeo atual enquanto ele for o player; só procura outro se ele sumir/encolher
+    // (evita pular para um preview maior que aparece por um instante).
+    if (!(c.video?.isConnected && c.video.clientWidth >= MIN_PLAYER_W)) {
+      const v = pickVideo();
+      if (v && v !== c.video) bindVideo(c, v);
+    }
     if (!c.video?.isConnected) return;
-    mountPanel(c); // o React da Kick pode recriar a área do chat
 
     const abs = currentAbs(c);
-    if (abs < c.renderedUntil - 2000 || abs - c.renderedUntil > SEEK_JUMP_MS + BACKLOG_MS) {
-      resetTo(c, abs); // seek pra trás ou pulo grande pra frente
-    }
+    // Seek: pelo evento "seeking" (qualquer pulo de verdade) ou, se o evento se perder,
+    // pela heurística (voltou no tempo ou pulou muito pra frente).
+    const jumped = abs < c.renderedUntil - 2000 || abs - c.renderedUntil > (c.seeking ? 3000 : SEEK_JUMP_MS + BACKLOG_MS);
+    c.seeking = false;
+    if (jumped) resetTo(c, abs);
 
+    prune(c, abs);
     pumpFetches(c, abs);
 
     const from = upperIdx(c.msgs, c.renderedUntil);
     const to = upperIdx(c.msgs, abs);
-    for (let i = from; i < to; i++) insertRow(c, c.msgs[i]);
+    if (to > from) {
+      // mensagens novas são todas posteriores às que estão na tela: um append só
+      const frag = document.createDocumentFragment();
+      for (let i = from; i < to; i++) frag.appendChild(renderRow(c.msgs[i], c.meta.startMs));
+      c.list.appendChild(frag);
+      afterInsert(c);
+    }
     if (abs > c.renderedUntil) c.renderedUntil = abs;
 
     const rate = c.video.playbackRate;
-    const rateEl = c.panel.querySelector('.kvcs-rate');
     const rateTxt = rate !== 1 ? `${rate}x` : '';
-    if (rateEl.textContent !== rateTxt) rateEl.textContent = rateTxt;
-    setStatus(c, c.error || (c.video.paused ? T.paused : ''));
+    if (c.rateEl.textContent !== rateTxt) c.rateEl.textContent = rateTxt;
+    setStatus(c, nearbyError(c, abs) || (c.video.paused ? T.paused : ''));
   }
 
   // ---------- ciclo de vida (Kick é SPA) ----------
   // Basta o <video> existir: o player pode ficar sem carregar (autoplay bloqueado,
   // aba em segundo plano) e só carregar quando o usuário der play. Os eventos do
   // vídeo (play/seeked/timeupdate) cuidam do resto.
-  async function waitForVideo(c) {
-    for (;;) {
+  async function waitForVideo(c, timeoutMs) {
+    const until = Date.now() + timeoutMs;
+    while (Date.now() < until) {
       if (ctx !== c) return null;
       const v = pickVideo();
       if (v) return v;
       await sleep(500);
     }
+    return null;
   }
 
   function teardown() {
     if (!ctx) return;
+    ctx.abort?.abort();
     clearInterval(ctx.timer);
     if (ctx.boundVideo) VIDEO_EVENTS.forEach((e) => ctx.boundVideo.removeEventListener(e, ctx.onVideoEvent));
     if (ctx.native) ctx.native.inert = false;
@@ -477,22 +603,26 @@
   async function setup(slug, uuid) {
     teardown();
     const c = {
-      uuid, gen: 0, msgs: [], seen: new Set(), inflight: 0,
-      renderedUntil: 0, fetchCursor: 0, showNative: false, error: '',
+      uuid, msgs: [], seen: new Set(), done: new Set(), pending: new Set(), failed: new Map(),
+      renderedUntil: 0, showNative: false, stick: true, lastError: '', abort: new AbortController(),
     };
     ctx = c;
     buildPanel(c);
     setStatus(c, T.loading);
     try {
-      c.meta = await loadVodMeta(uuid, slug);
+      c.meta = await loadVodMeta(uuid, slug, c.abort.signal);
     } catch (e) {
-      setStatus(c, T.failed + e.message);
+      if (ctx === c && e?.name !== 'AbortError') fail(c, e?.message || String(e));
       return;
     }
-    c.video = await waitForVideo(c);
-    if (ctx !== c || !c.video) return;
+    c.video = await waitForVideo(c, VIDEO_WAIT_MS);
+    if (ctx !== c) return;
+    if (!c.video) { fail(c, T.noVideo); return; }
     setStatus(c, '');
-    c.onVideoEvent = () => tick(c);
+    c.onVideoEvent = (ev) => {
+      if (ev.type === 'seeking') c.seeking = true;
+      tick(c);
+    };
     bindVideo(c, c.video);
     resetTo(c, currentAbs(c));
     c.timer = setInterval(() => tick(c), 200);
@@ -508,10 +638,13 @@
 
   // Gancho para testes manuais: se a página definir globalThis.__KVCS_TEST__ antes de
   // injetar este arquivo, expõe o renderizador e não inicia sozinho. Content scripts
-  // rodam num mundo isolado, então isso nunca acontece na extensão instalada.
-  if (typeof globalThis.__KVCS_TEST__ === 'object' && globalThis.__KVCS_TEST__) {
-    Object.assign(globalThis.__KVCS_TEST__, {
+  // rodam num mundo isolado, então isso nunca acontece na extensão instalada
+  // (e um elemento com id="__KVCS_TEST__" na página não conta: DOM clobbering).
+  const hook = globalThis.__KVCS_TEST__;
+  if (hook && typeof hook === 'object' && !(typeof Node !== 'undefined' && hook instanceof Node)) {
+    Object.assign(hook, {
       normalize, renderRow, fetchWindow, loadVodMeta, setup, teardown, tick, getCtx: () => ctx,
+      parseKickDate, safeColor, prune, pumpFetches,
     });
     return;
   }

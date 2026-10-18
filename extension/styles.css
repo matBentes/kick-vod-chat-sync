@@ -35,6 +35,11 @@
 #kvcs-panel.kvcs-native-mode .kvcs-icon-btn { display: none; }
 #kvcs-panel.kvcs-native-mode .kvcs-dot { background: var(--kvcs-muted); }
 #kvcs-panel.kvcs-floating .kvcs-switch { display: none; }
+/* não deu para iniciar: só a barra com o motivo, por cima do chat original (que fica livre) */
+#kvcs-panel.kvcs-dead .kvcs-switch,
+#kvcs-panel.kvcs-dead .kvcs-icon-btn { display: none; }
+#kvcs-panel.kvcs-dead .kvcs-dot { background: #ff5c5c; }
+#kvcs-panel.kvcs-dead .kvcs-title { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
 
 /* fallback quando a área do chat nativo não existe */
 #kvcs-panel.kvcs-floating {
