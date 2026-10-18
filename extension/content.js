@@ -424,9 +424,11 @@
     // quando a Kick move um ancestral do chat, o navegador zera o scrollTop e dispara
     // "scroll" sozinho — isso não pode ser lido como "o usuário subiu".
     const markUser = () => { c.userScrollAt = performance.now(); };
-    for (const ev of ['wheel', 'touchmove', 'pointerdown', 'keydown']) {
+    for (const ev of ['touchmove', 'pointerdown', 'keydown']) {
       c.list.addEventListener(ev, markUser, { passive: true });
     }
+    // roda pra cima solta na hora: o próximo tick não pode puxar a lista de volta
+    c.list.addEventListener('wheel', (e) => { markUser(); if (e.deltaY < 0) c.stick = false; }, { passive: true });
     c.list.addEventListener('scroll', () => {
       if (isAtBottom(c)) { c.stick = true; c.more.hidden = true; return; }
       if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = false;
@@ -488,6 +490,12 @@
   // Depois de inserir: limita o DOM SEMPRE (com teto maior se o usuário está lendo mais acima,
   // para não sumir o que ele está lendo) e rola só se estava colado no fim.
   // Ao remover linhas acima, o scroll anchoring do Chrome mantém a posição de leitura.
+  // Chamar ANTES de inserir: com interação recente do usuário, a posição real decide
+  // (o evento "scroll" chega um frame depois e um tick no meio desfaria a rolagem dele).
+  function refreshStick(c) {
+    if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = isAtBottom(c);
+  }
+
   function afterInsert(c) {
     const cap = c.stick ? MAX_DOM_MSGS : MAX_DOM_MSGS * 4;
     while (c.list.childElementCount > cap) c.list.firstElementChild.remove();
@@ -497,6 +505,7 @@
 
   // insere mantendo a ordem por tempo (mensagens que chegam atrasadas do backlog)
   function insertRow(c, m) {
+    refreshStick(c);
     const row = renderRow(m, c.meta.startMs);
     let ref = c.list.lastElementChild;
     while (ref && Number(ref.dataset.t) > m.t) ref = ref.previousElementSibling;
@@ -570,6 +579,7 @@
     const to = upperIdx(c.msgs, abs);
     if (to > from) {
       // mensagens novas são todas posteriores às que estão na tela: um append só
+      refreshStick(c);
       const frag = document.createDocumentFragment();
       for (let i = from; i < to; i++) frag.appendChild(renderRow(c.msgs[i], c.meta.startMs));
       c.list.appendChild(frag);
