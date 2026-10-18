@@ -490,10 +490,12 @@
   // Depois de inserir: limita o DOM SEMPRE (com teto maior se o usuário está lendo mais acima,
   // para não sumir o que ele está lendo) e rola só se estava colado no fim.
   // Ao remover linhas acima, o scroll anchoring do Chrome mantém a posição de leitura.
-  // Chamar ANTES de inserir: com interação recente do usuário, a posição real decide
-  // (o evento "scroll" chega um frame depois e um tick no meio desfaria a rolagem dele).
+  // Chamar ANTES de inserir: com interação recente do usuário, se ele já saiu do fim,
+  // solta a lista (o evento "scroll" chega um frame depois e um tick no meio desfaria a
+  // rolagem dele). Só solta, nunca cola: a rolagem animada ainda pode não ter começado,
+  // e quem cola de volta é o handler de "scroll" ao chegar no fim.
   function refreshStick(c) {
-    if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = isAtBottom(c);
+    if (c.stick && performance.now() - (c.userScrollAt ?? -Infinity) < 1000 && !isAtBottom(c)) c.stick = false;
   }
 
   function afterInsert(c) {
