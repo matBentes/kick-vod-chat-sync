@@ -377,8 +377,9 @@
       // Só move quando o contêiner mudou (React recriou o chat). Mover zera o scrollTop,
       // então devolve a lista ao fim se ela estava no fim.
       if (c.panel.parentElement !== native.parentElement) {
+        const top = c.list.scrollTop;
         native.after(c.panel);
-        if (c.stick) scrollToBottom(c);
+        if (c.stick) scrollToBottom(c); else c.list.scrollTop = top;
       }
       c.panel.classList.remove('kvcs-floating');
       if (native.inert !== !c.showNative) native.inert = !c.showNative; // fora do foco/leitor de tela enquanto coberta
@@ -430,9 +431,12 @@
     // roda pra cima solta na hora: o próximo tick não pode puxar a lista de volta
     c.list.addEventListener('wheel', (e) => { markUser(); if (e.deltaY < 0) c.stick = false; }, { passive: true });
     c.list.addEventListener('scroll', () => {
-      if (isAtBottom(c)) { c.stick = true; c.more.hidden = true; return; }
-      if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = false;
+      const top = c.list.scrollTop;
+      if (isAtBottom(c)) { c.stick = true; c.more.hidden = true; }
+      else if (performance.now() - (c.userScrollAt ?? -Infinity) < 1000) c.stick = false;
       else if (c.stick) c.list.scrollTop = c.list.scrollHeight; // scroll que ninguém pediu: volta ao fim
+      else if (top === 0 && c.lastTop > 100) c.list.scrollTop = c.lastTop; // re-render zerou quem estava lendo
+      c.lastTop = c.list.scrollTop;
     }, { passive: true });
     setShowTime(c, loadShowTime());
     setNativeMode(c, false);
