@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "short_name": "VOD Chat Sync",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "default_locale": "en",
   "description": "__MSG_extDescription__",
   "homepage_url": "https://github.com/matBentes/kick-vod-chat-sync",

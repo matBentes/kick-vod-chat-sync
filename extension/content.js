@@ -364,6 +364,23 @@
     c.fetchCursor = Math.floor((absMs - BACKLOG_MS) / FETCH_STEP_MS) * FETCH_STEP_MS;
   }
 
+  // O player da VOD não é necessariamente o primeiro <video> da página: a Kick tem
+  // vídeos decorativos (ex.: reward-available-CTA.webm, 1s em loop, 36px) que podem
+  // vir antes no DOM. Pegar o primeiro prendia o chat em ~00:00:00.
+  // Escolhe o maior <video> visível, desempatando pela duração.
+  const MIN_PLAYER_W = 200;
+  function pickVideo() {
+    let best = null, bestScore = 0;
+    for (const v of document.querySelectorAll('video')) {
+      const area = v.clientWidth * v.clientHeight;
+      const dur = Number.isFinite(v.duration) ? v.duration : 0;
+      if (v.clientWidth < MIN_PLAYER_W && dur < 60) continue; // ícone/animação
+      const score = area + dur;
+      if (score > bestScore) { best = v; bestScore = score; }
+    }
+    return best;
+  }
+
   // Além do timer, os eventos do próprio vídeo disparam o tick: o Chrome pode segurar
   // timers de abas sem foco/mudas por até 1 min, mas eventos de mídia continuam chegando.
   const VIDEO_EVENTS = ['timeupdate', 'seeked', 'ratechange', 'play', 'pause'];
@@ -377,11 +394,10 @@
 
   function tick(c) {
     if (ctx !== c) return;
-    if (!c.video.isConnected) {            // o player pode recriar o <video>
-      const v = document.querySelector('video');
-      if (!v) return;
-      bindVideo(c, v);
-    }
+    // o player pode recriar o <video>, e outros vídeos podem aparecer/sumir na página
+    const v = pickVideo();
+    if (v && v !== c.video) bindVideo(c, v);
+    if (!c.video?.isConnected) return;
     mountPanel(c); // o React da Kick pode recriar a área do chat
 
     const abs = currentAbs(c);
@@ -410,7 +426,7 @@
   async function waitForVideo(c) {
     for (;;) {
       if (ctx !== c) return null;
-      const v = document.querySelector('video');
+      const v = pickVideo();
       if (v) return v;
       await sleep(500);
     }
